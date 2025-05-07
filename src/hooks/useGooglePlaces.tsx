@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 // Define Google types inline to avoid import issues
 declare global {
   interface Window {
-    google: typeof google;
+    google: any; // Using any to avoid TypeScript errors with the global google object
     initAutocomplete: () => void;
   }
 }
@@ -15,7 +15,7 @@ interface UseGooglePlacesProps {
 }
 
 export const useGooglePlaces = ({ inputRef, onPlaceSelected }: UseGooglePlacesProps) => {
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  const autocompleteRef = useRef<any>(null); // Using any for autocomplete reference
 
   useEffect(() => {
     const loadGoogleMapsScript = () => {
@@ -71,7 +71,7 @@ export const useGooglePlaces = ({ inputRef, onPlaceSelected }: UseGooglePlacesPr
 
       // Lytt til stedsendringer
       autocompleteRef.current.addListener('place_changed', () => {
-        const place = autocompleteRef.current!.getPlace();
+        const place = autocompleteRef.current.getPlace();
         if (place.formatted_address) {
           onPlaceSelected(place.formatted_address);
           console.log('Valgt adresse:', place.formatted_address);

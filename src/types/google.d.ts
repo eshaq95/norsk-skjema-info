@@ -13,7 +13,7 @@ declare namespace google {
       class Autocomplete {
         constructor(
           input: HTMLInputElement,
-          options?: google.maps.places.AutocompleteOptions
+          options?: AutocompleteOptions
         );
         addListener: (event: string, callback: () => void) => void;
         getPlace: () => {
