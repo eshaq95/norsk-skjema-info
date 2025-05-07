@@ -38,7 +38,7 @@ export const useMunicipalities = () => {
       // Fetch all municipalities once and cache them
       if (!municipalitiesCache) {
         console.log('Fetching all municipalities from Kartverket');
-        const res = await fetch("https://api.kartverket.no/kommuneinfo/v1/kommuner");
+        const res = await fetch(`${KARTVERKET_BASE}/kommuneinfo/v1/kommuner`);
         
         if (!res.ok) {
           console.error(`HTTP error! status: ${res.status}`);
@@ -52,6 +52,7 @@ export const useMunicipalities = () => {
         }));
         
         console.log(`Cached ${municipalitiesCache.length} municipalities`);
+        console.log("Example first municipality:", municipalitiesCache[0]);
       }
       
       // Filter municipalities with canonical string comparison
@@ -62,7 +63,8 @@ export const useMunicipalities = () => {
         kommune.name && canon(kommune.name).includes(canonicalQuery)
       ).slice(0, 20); // Limit to 20 results
       
-      console.log(`Found ${filtered.length} municipalities matching "${query}"`);
+      console.log(`Found ${filtered.length} municipalities matching "${query}"`, 
+                  filtered.length > 0 ? filtered.map(k => k.name).join(", ") : "none");
       return filtered;
     } catch (error) {
       console.error('Error fetching municipalities:', error);
@@ -72,6 +74,14 @@ export const useMunicipalities = () => {
   
   return fetchMunicipalities;
 };
+
+// For debugging in console
+if (typeof window !== 'undefined') {
+  (window as any).fetchMunicipalities = async (query: string) => {
+    const getMunicipalities = useMunicipalities();
+    return await getMunicipalities(query);
+  };
+}
 
 export const fetchStreets = async (municipalityId: string, query: string): Promise<Street[]> => {
   console.log('fetchStreets called with municipalityId:', municipalityId, 'query:', query);
