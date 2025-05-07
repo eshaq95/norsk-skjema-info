@@ -6,6 +6,9 @@ interface FormData {
   adresse: string;
   postnummer: string;
   poststed: string;
+  kommune?: string;
+  gate?: string;
+  husnummer?: string;
 }
 
 interface FormErrors {
@@ -15,6 +18,9 @@ interface FormErrors {
   adresse?: string;
   postnummer?: string;
   poststed?: string;
+  kommune?: string;
+  gate?: string;
+  husnummer?: string;
 }
 
 export const validateForm = (formData: FormData): FormErrors => {

@@ -1,14 +1,28 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import FormInput from './form/FormInput';
 import PhoneInput from './form/PhoneInput';
-import AddressInput from './form/AddressInput';
-import PostalCodeInput from './form/PostalCodeInput';
 import SubmitButton from './form/SubmitButton';
 import PrivacyNotice from './form/PrivacyNotice';
 import { validateForm } from '@/utils/validation';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { 
+  useMunicipalities, 
+  fetchStreets, 
+  fetchHouseNumbers,
+  Municipality,
+  Street,
+  HouseNumber
+} from '@/hooks/useAddressLookup';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 interface FormData {
   fornavn: string;
@@ -17,6 +31,11 @@ interface FormData {
   adresse: string;
   postnummer: string;
   poststed: string;
+  kommune: string;
+  kommuneId: string;
+  gate: string;
+  gateId: string;
+  husnummer: string;
 }
 
 interface FormErrors {
@@ -26,6 +45,9 @@ interface FormErrors {
   adresse?: string;
   postnummer?: string;
   poststed?: string;
+  kommune?: string;
+  gate?: string;
+  husnummer?: string;
 }
 
 const NorskForm: React.FC = () => {
@@ -36,11 +58,69 @@ const NorskForm: React.FC = () => {
     adresse: '',
     postnummer: '',
     poststed: '',
+    kommune: '',
+    kommuneId: '',
+    gate: '',
+    gateId: '',
+    husnummer: '',
   });
   
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  // Autocomplete state
+  const [kommuneQuery, setKommuneQuery] = useState('');
+  const [gateQuery, setGateQuery] = useState('');
+  const [kommuneOptions, setKommuneOptions] = useState<Municipality[]>([]);
+  const [gateOptions, setGateOptions] = useState<Street[]>([]);
+  const [husnummerOptions, setHusnummerOptions] = useState<HouseNumber[]>([]);
+  
+  const getMunicipalities = useMunicipalities();
+
+  // Fetch municipalities when query changes
+  useEffect(() => {
+    const fetchMunicipalities = async () => {
+      if (kommuneQuery.length >= 2) {
+        const options = await getMunicipalities(kommuneQuery);
+        setKommuneOptions(options);
+      } else {
+        setKommuneOptions([]);
+      }
+    };
+    
+    const timeoutId = setTimeout(fetchMunicipalities, 300);
+    return () => clearTimeout(timeoutId);
+  }, [kommuneQuery]);
+
+  // Fetch streets when municipality and query changes
+  useEffect(() => {
+    const fetchStreetOptions = async () => {
+      if (formData.kommuneId && gateQuery.length >= 2) {
+        const options = await fetchStreets(formData.kommuneId, gateQuery);
+        setGateOptions(options);
+      } else {
+        setGateOptions([]);
+      }
+    };
+    
+    const timeoutId = setTimeout(fetchStreetOptions, 300);
+    return () => clearTimeout(timeoutId);
+  }, [formData.kommuneId, gateQuery]);
+
+  // Fetch house numbers when street is selected
+  useEffect(() => {
+    const loadHouseNumbers = async () => {
+      if (formData.kommuneId && formData.gateId) {
+        const options = await fetchHouseNumbers(formData.kommuneId, formData.gateId);
+        setHusnummerOptions(options);
+      } else {
+        setHusnummerOptions([]);
+      }
+    };
+    
+    loadHouseNumbers();
+  }, [formData.kommuneId, formData.gateId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -56,24 +136,62 @@ const NorskForm: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear the error when user starts typing again
-    if (errors[field]) {
+    if (errors[field as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
 
-  const handlePostnummerChange = (postnummer: string, poststed?: string) => {
+  const handleKommuneSelect = (municipality: Municipality) => {
     setFormData(prev => ({
       ...prev,
-      postnummer,
-      ...(poststed ? { poststed } : {})
+      kommune: municipality.name,
+      kommuneId: municipality.id,
+      gate: '',
+      gateId: '',
+      husnummer: '',
+      postnummer: '',
+      poststed: ''
     }));
-
-    if (errors.postnummer) {
-      setErrors(prev => ({ ...prev, postnummer: undefined }));
+    setKommuneQuery(municipality.name);
+    setKommuneOptions([]);
+    
+    if (errors.kommune) {
+      setErrors(prev => ({ ...prev, kommune: undefined }));
     }
+  };
 
-    if (poststed && errors.poststed) {
-      setErrors(prev => ({ ...prev, poststed: undefined }));
+  const handleGateSelect = (street: Street) => {
+    setFormData(prev => ({
+      ...prev,
+      gate: street.name,
+      gateId: street.id,
+      husnummer: '',
+      postnummer: '',
+      poststed: ''
+    }));
+    setGateQuery(street.name);
+    setGateOptions([]);
+    
+    if (errors.gate) {
+      setErrors(prev => ({ ...prev, gate: undefined }));
+    }
+  };
+
+  const handleHusnummerSelect = (husnummer: string) => {
+    const selected = husnummerOptions.find(h => h.label === husnummer);
+    
+    if (selected) {
+      setFormData(prev => ({
+        ...prev,
+        husnummer: selected.label,
+        postnummer: selected.postnr,
+        poststed: selected.poststed,
+        adresse: `${formData.gate} ${selected.label}`
+      }));
+      
+      if (errors.husnummer) {
+        setErrors(prev => ({ ...prev, husnummer: undefined }));
+      }
     }
   };
 
@@ -104,17 +222,20 @@ const NorskForm: React.FC = () => {
           adresse: '',
           postnummer: '',
           poststed: '',
+          kommune: '',
+          kommuneId: '',
+          gate: '',
+          gateId: '',
+          husnummer: ''
         });
+        setKommuneQuery('');
+        setGateQuery('');
       }, 1000);
     }
   };
 
   return (
     <Card className="w-full max-w-md mx-auto shadow-md">
-      <CardHeader className="bg-norsk-blue text-white rounded-t-md">
-        <CardTitle className="text-xl font-medium">Personlig Informasjon</CardTitle>
-      </CardHeader>
-      
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} noValidate>
           {/* Side by side name fields */}
@@ -147,33 +268,124 @@ const NorskForm: React.FC = () => {
             errorMessage={errors.telefon}
           />
           
-          <AddressInput
-            value={formData.adresse}
-            onChange={(value) => handleFieldChange('adresse', value)}
-            hasError={!!errors.adresse}
-            errorMessage={errors.adresse}
-          />
+          {/* Kommune autocomplete */}
+          <div className="mb-4">
+            <label htmlFor="kommune" className="block text-sm font-medium text-norsk-dark mb-1">
+              Kommune
+            </label>
+            <div className="relative">
+              <Input
+                id="kommune"
+                value={kommuneQuery}
+                onChange={(e) => setKommuneQuery(e.target.value)}
+                className="w-full"
+                placeholder="Skriv kommune..."
+              />
+              {kommuneOptions.length > 0 && (
+                <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                  {kommuneOptions.map((kommune) => (
+                    <li
+                      key={kommune.id}
+                      onClick={() => handleKommuneSelect(kommune)}
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    >
+                      {kommune.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {errors.kommune && <p className="text-norsk-red text-sm mt-1">{errors.kommune}</p>}
+            </div>
+          </div>
           
+          {/* Gate autocomplete - only visible when kommune is selected */}
+          {formData.kommuneId && (
+            <div className="mb-4">
+              <label htmlFor="gate" className="block text-sm font-medium text-norsk-dark mb-1">
+                Gate
+              </label>
+              <div className="relative">
+                <Input
+                  id="gate"
+                  value={gateQuery}
+                  onChange={(e) => setGateQuery(e.target.value)}
+                  className="w-full"
+                  placeholder="Skriv gatenavn..."
+                />
+                {gateOptions.length > 0 && (
+                  <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {gateOptions.map((gate) => (
+                      <li
+                        key={gate.id}
+                        onClick={() => handleGateSelect(gate)}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {gate.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {errors.gate && <p className="text-norsk-red text-sm mt-1">{errors.gate}</p>}
+              </div>
+            </div>
+          )}
+          
+          {/* Husnummer dropdown - only visible when gate is selected */}
+          {formData.gateId && husnummerOptions.length > 0 && (
+            <div className="mb-4">
+              <label htmlFor="husnummer" className="block text-sm font-medium text-norsk-dark mb-1">
+                Husnummer
+              </label>
+              <Select 
+                value={formData.husnummer} 
+                onValueChange={handleHusnummerSelect}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Velg husnummer..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {husnummerOptions.map((num) => (
+                    <SelectItem key={num.label} value={num.label}>
+                      {num.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.husnummer && <p className="text-norsk-red text-sm mt-1">{errors.husnummer}</p>}
+            </div>
+          )}
+          
+          {/* Postnummer and Poststed side by side - readonly when filled by address lookup */}
           <div className="grid grid-cols-2 gap-4 mb-4">
-            <PostalCodeInput
-              postnummer={formData.postnummer}
-              poststed={formData.poststed}
-              onPostnummerChange={handlePostnummerChange}
-              onPoststedChange={(value) => handleFieldChange('poststed', value)}
-              hasError={!!errors.postnummer || !!errors.poststed}
-              errorMessage={errors.postnummer || errors.poststed}
-            />
+            <div>
+              <label htmlFor="postnummer" className="block text-sm font-medium text-norsk-dark mb-1">
+                Postnummer
+              </label>
+              <Input
+                id="postnummer"
+                name="postnummer"
+                value={formData.postnummer}
+                onChange={handleChange}
+                className="w-full bg-gray-50"
+                readOnly={!!formData.husnummer}
+              />
+              {errors.postnummer && <p className="text-norsk-red text-sm mt-1">{errors.postnummer}</p>}
+            </div>
             
-            <FormInput
-              id="poststed"
-              label="Poststed"
-              value={formData.poststed}
-              onChange={handleChange}
-              hasError={!!errors.poststed}
-              errorMessage={errors.poststed}
-              readOnly={true}
-              className="bg-gray-50"
-            />
+            <div>
+              <label htmlFor="poststed" className="block text-sm font-medium text-norsk-dark mb-1">
+                Poststed
+              </label>
+              <Input
+                id="poststed"
+                name="poststed"
+                value={formData.poststed}
+                onChange={handleChange}
+                className="w-full bg-gray-50"
+                readOnly={!!formData.husnummer}
+              />
+              {errors.poststed && <p className="text-norsk-red text-sm mt-1">{errors.poststed}</p>}
+            </div>
           </div>
           
           <SubmitButton isSubmitting={isSubmitting} />
