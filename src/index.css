@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 220 66% 18%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -35,19 +36,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -97,5 +91,35 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .scandi-input {
+    @apply border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-norsk-blue-light;
+  }
+  
+  .scandi-button {
+    @apply bg-norsk-blue text-white px-4 py-2 rounded-md hover:bg-norsk-blue-light transition-colors font-medium;
+  }
+  
+  .scandi-form-group {
+    @apply mb-4;
+  }
+  
+  .scandi-label {
+    @apply block text-sm font-medium text-norsk-dark mb-1;
+  }
+  
+  .scandi-error {
+    @apply text-norsk-red text-sm mt-1;
+  }
+  
+  .norsk-container {
+    @apply max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md;
+  }
+  
+  .norsk-header {
+    @apply text-2xl font-bold text-norsk-blue mb-6 text-center;
   }
 }
