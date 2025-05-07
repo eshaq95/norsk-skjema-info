@@ -1,34 +1,6 @@
 
-// Type definitions for Google Places API
-declare namespace google {
-  namespace maps {
-    namespace places {
-      interface AutocompleteOptions {
-        types?: string[];
-        componentRestrictions?: {
-          country: string | string[];
-        };
-      }
-
-      class Autocomplete {
-        constructor(
-          input: HTMLInputElement,
-          options?: AutocompleteOptions
-        );
-        addListener: (event: string, callback: () => void) => void;
-        getPlace: () => {
-          formatted_address?: string;
-          geometry?: {
-            location: {
-              lat: () => number;
-              lng: () => number;
-            };
-          };
-        };
-      }
-    }
-  }
-}
+// Type definitions for Google Places API are now imported from @types/google.maps
+// This file acts as a supplement for any additional type definitions needed
 
 // This type definition is now handled inline in useGooglePlaces.tsx
 // interface Window {

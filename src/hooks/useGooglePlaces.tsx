@@ -1,10 +1,10 @@
 
 import { useEffect, useRef } from 'react';
 
-// Define Google types inline to avoid import issues
+// Define Google types using the @types/google.maps package
 declare global {
   interface Window {
-    google: any; // Using any to avoid TypeScript errors with the global google object
+    google: typeof google;
     initAutocomplete: () => void;
   }
 }
@@ -15,7 +15,7 @@ interface UseGooglePlacesProps {
 }
 
 export const useGooglePlaces = ({ inputRef, onPlaceSelected }: UseGooglePlacesProps) => {
-  const autocompleteRef = useRef<any>(null); // Using any for autocomplete reference
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   useEffect(() => {
     const loadGoogleMapsScript = () => {
@@ -53,7 +53,7 @@ export const useGooglePlaces = ({ inputRef, onPlaceSelected }: UseGooglePlacesPr
 
   const initAutocomplete = () => {
     if (!inputRef.current || !window.google?.maps?.places) {
-      console.log('Google Maps Places API er ikke tilgjengelig eller input-feltet er ikke klart');
+      console.log('Google Maps API er ikke tilgjengelig eller input-feltet er ikke klart');
       return;
     }
     
@@ -71,7 +71,7 @@ export const useGooglePlaces = ({ inputRef, onPlaceSelected }: UseGooglePlacesPr
 
       // Lytt til stedsendringer
       autocompleteRef.current.addListener('place_changed', () => {
-        const place = autocompleteRef.current.getPlace();
+        const place = autocompleteRef.current!.getPlace();
         if (place.formatted_address) {
           onPlaceSelected(place.formatted_address);
           console.log('Valgt adresse:', place.formatted_address);
