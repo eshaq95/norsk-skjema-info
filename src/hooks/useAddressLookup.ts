@@ -32,7 +32,7 @@ export const useMunicipalities = () => {
       // Fetch all municipalities once and cache them
       if (!municipalitiesCache) {
         console.log('Fetching all municipalities from Kartverket');
-        const res = await fetch(`${KARTVERKET_BASE}/kommuneinfo/v1/kommuner`);
+        const res = await fetch("https://api.kartverket.no/kommuneinfo/v1/kommuner");
         
         if (!res.ok) {
           console.error(`HTTP error! status: ${res.status}`);
@@ -42,16 +42,16 @@ export const useMunicipalities = () => {
         const data = await res.json();
         municipalitiesCache = data.map((kommune: any) => ({
           id: kommune.kommunenummer,
-          name: kommune.navn,
+          name: kommune.navn ?? "", // Add fallback for potentially undefined names
         }));
         
         console.log(`Cached ${municipalitiesCache.length} municipalities`);
       }
       
-      // Filter municipalities based on query
+      // Filter municipalities based on query with defensive check for name property
       const lowercaseQuery = query.toLowerCase();
       const filtered = municipalitiesCache.filter(
-        kommune => kommune.name.toLowerCase().includes(lowercaseQuery)
+        kommune => kommune.name && kommune.name.toLowerCase().includes(lowercaseQuery)
       ).slice(0, 20); // Limit to 20 results
       
       console.log(`Found ${filtered.length} municipalities matching "${query}"`);
