@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import FormInput from './form/FormInput';
@@ -341,7 +342,7 @@ const NorskForm: React.FC = () => {
                   value={formData.husnummer}
                   onValueChange={handleHusnummerSelect}
                 >
-                  <SelectTrigger className={`bg-${!formData.gateId ? 'gray-100' : 'white'}`}>
+                  <SelectTrigger className={`${!formData.gateId ? 'bg-gray-100' : 'bg-white'}`}>
                     <SelectValue placeholder="Velg husnummer" />
                   </SelectTrigger>
                   <SelectContent>
