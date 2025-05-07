@@ -21,14 +21,12 @@ export interface HouseNumber {
 }
 
 export const useMunicipalities = () => {
-  const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
-  
   const fetchMunicipalities = async (query: string): Promise<Municipality[]> => {
     console.log('Fetching municipalities with query:', query);
     if (query.length < 2) return [];
     
     try {
-      // Add the required text parameter to the API call
+      // Make sure the text parameter is properly included
       const url = `${ETUR}/autocomplete?text=${encodeURIComponent(query)}&layers=municipality&size=20`;
       console.log('Fetching municipalities from URL:', url);
       
@@ -67,7 +65,7 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
   if (query.length < 2) return [];
   
   try {
-    const url = `${ETUR}/autocomplete?layers=street&municipality=${municipalityId}&text=${encodeURIComponent(query)}`;
+    const url = `${ETUR}/autocomplete?text=${encodeURIComponent(query)}&layers=street&municipality=${municipalityId}`;
     console.log('Fetching streets from URL:', url);
     const res = await fetch(url, HDR);
     

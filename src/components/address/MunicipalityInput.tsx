@@ -26,8 +26,8 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
         const options = await getMunicipalities(query);
         console.log('Municipality options received:', options);
         setOptions(options);
-        setIsOpen(options.length > 0);
         setLoading(false);
+        setIsOpen(true);
       } else {
         setOptions([]);
         setIsOpen(false);
@@ -38,11 +38,30 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
     return () => clearTimeout(timeoutId);
   }, [query, getMunicipalities]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setIsOpen(false);
+    };
+    
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
+
   const handleSelect = (municipality: Municipality) => {
     console.log('Selected municipality:', municipality);
     setQuery(municipality.name);
     onMunicipalitySelect(municipality);
     setIsOpen(false);
+  };
+
+  const handleInputClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent immediate closing
+    if (query.length >= 2 && options.length > 0) {
+      setIsOpen(true);
+    }
   };
 
   return (
@@ -57,7 +76,8 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
           onChange={(e) => setQuery(e.target.value)}
           className="w-full"
           placeholder="Skriv inn kommune (minst 2 bokstaver)"
-          onFocus={() => query.length >= 2 && setIsOpen(true)}
+          onClick={handleInputClick}
+          onFocus={() => query.length >= 2 && options.length > 0 && setIsOpen(true)}
         />
         
         {loading && (
@@ -67,11 +87,14 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
         )}
         
         {isOpen && options.length > 0 && (
-          <ul className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+          <ul className="absolute z-[100] w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto mt-1">
             {options.map((kommune) => (
               <li
                 key={kommune.id}
-                onClick={() => handleSelect(kommune)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelect(kommune);
+                }}
                 className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
               >
                 {kommune.name}
@@ -80,8 +103,8 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
           </ul>
         )}
         
-        {query.length >= 2 && !loading && isOpen && options.length === 0 && (
-          <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg p-2">
+        {query.length >= 2 && !loading && options.length === 0 && (
+          <div className="absolute z-[100] w-full bg-white border border-gray-200 rounded-md shadow-lg p-2 mt-1">
             <p className="text-sm text-gray-500">Ingen treff</p>
           </div>
         )}
