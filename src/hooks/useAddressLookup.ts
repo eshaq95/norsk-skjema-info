@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 // Kartverket API endpoints
@@ -46,9 +47,11 @@ export const useMunicipalities = () => {
         }
         
         const data = await res.json();
+        console.log("First municipality in response:", data[0]);
+        
         municipalitiesCache = data.map((kommune: any) => ({
           id: kommune.kommunenummer,
-          name: kommune.navn ?? "", // Add fallback for potentially undefined names
+          name: kommune.kommunenavn ?? kommune.kommunenavnNorsk ?? kommune.navnNorsk ?? kommune.navn ?? "",
         }));
         
         console.log(`Cached ${municipalitiesCache.length} municipalities`);
