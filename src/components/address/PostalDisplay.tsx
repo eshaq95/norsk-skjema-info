@@ -26,7 +26,7 @@ const PostalDisplay: React.FC<PostalDisplayProps> = ({
           name="postnummer"
           value={postnummer}
           className="w-full bg-gray-50"
-          readOnly={true}
+          disabled={true}
           placeholder=""
         />
         {errorPostnummer && <p className="text-norsk-red text-sm mt-1">{errorPostnummer}</p>}
@@ -41,7 +41,7 @@ const PostalDisplay: React.FC<PostalDisplayProps> = ({
           name="poststed"
           value={poststed}
           className="w-full bg-gray-50"
-          readOnly={true}
+          disabled={true}
           placeholder=""
         />
         {errorPoststed && <p className="text-norsk-red text-sm mt-1">{errorPoststed}</p>}

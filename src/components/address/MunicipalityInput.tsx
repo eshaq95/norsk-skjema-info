@@ -78,6 +78,13 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
       setIsOpen(true);
     }
   };
+  
+  const handleBlur = () => {
+    // Delayed closing to allow click events to process first
+    setTimeout(() => {
+      setIsOpen(false);
+    }, 150);
+  };
 
   return (
     <div className="mb-4" ref={dropdownRef}>
@@ -93,7 +100,7 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
           placeholder="Skriv inn kommune (minst 2 bokstaver)"
           onClick={handleInputClick}
           onFocus={() => query.length >= 2 && options.length > 0 && setIsOpen(true)}
-          onBlur={() => setTimeout(() => setIsOpen(false), 150)}
+          onBlur={handleBlur}
         />
         
         {loading && (

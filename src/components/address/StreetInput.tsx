@@ -82,6 +82,13 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
     }
   };
 
+  const handleBlur = () => {
+    // Delayed closing to allow click events to process first
+    setTimeout(() => {
+      setIsOpen(false);
+    }, 150);
+  };
+
   return (
     <div ref={dropdownRef}>
       <label htmlFor="gate" className="block text-sm font-medium text-norsk-dark mb-1">
@@ -97,7 +104,7 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
           placeholder={disabled ? "Velg kommune først" : "Skriv inn gatenavn"}
           onClick={handleInputClick}
           onFocus={() => query.length >= 2 && options.length > 0 && setIsOpen(true)}
-          onBlur={() => setTimeout(() => setIsOpen(false), 150)}
+          onBlur={handleBlur}
         />
         
         {loading && (
