@@ -6,6 +6,14 @@ interface UseGooglePlacesProps {
   onPlaceSelected: (place: string) => void;
 }
 
+// Deklarere global initAutocomplete funksjon
+declare global {
+  interface Window {
+    initAutocomplete: () => void;
+    google: typeof google;
+  }
+}
+
 export const useGooglePlaces = ({ inputRef, onPlaceSelected }: UseGooglePlacesProps) => {
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
@@ -53,7 +61,7 @@ export const useGooglePlaces = ({ inputRef, onPlaceSelected }: UseGooglePlacesPr
       console.log('Initialiserer Google Places Autocomplete');
       
       // Sett opp autocomplete for adresse
-      autocompleteRef.current = new google.maps.places.Autocomplete(
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(
         inputRef.current,
         { 
           types: ['address'],

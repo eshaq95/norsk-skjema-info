@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Button } from "@/components/ui/button";
 
 interface SubmitButtonProps {
   isSubmitting: boolean;
@@ -16,13 +17,13 @@ const SubmitButton: React.FC<SubmitButtonProps> = ({
 }) => {
   return (
     <div className="mt-6">
-      <button 
+      <Button 
         type="submit" 
-        className={`scandi-button w-full ${className}`}
+        className={`w-full bg-norsk-blue hover:bg-norsk-blue/90 text-white ${className}`}
         disabled={isSubmitting}
       >
         {isSubmitting ? loadingText : text}
-      </button>
+      </Button>
     </div>
   );
 };

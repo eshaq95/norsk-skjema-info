@@ -1,7 +1,8 @@
 
 import React, { useRef, useState } from 'react';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useGooglePlaces } from '@/hooks/useGooglePlaces';
-import FormInput from './FormInput';
 
 interface AddressInputProps {
   value: string;
@@ -33,20 +34,24 @@ const AddressInput: React.FC<AddressInputProps> = ({
   });
 
   return (
-    <FormInput
-      id="adresse"
-      label="Adresse"
-      value={value}
-      onChange={handleAddressChange}
-      hasError={hasError}
-      errorMessage={errorMessage}
-      inputRef={addressInputRef}
-      onFocus={() => setAddressFocused(true)}
-      onBlur={() => setAddressFocused(false)}
-      className={addressFocused ? 'ring-2 ring-norsk-blue-light' : ''}
-      placeholder="Gatenavn 123, Postnummer Oslo"
-      description="Start å skrive for adresseforslag"
-    />
+    <div className="space-y-2 mb-4">
+      <Label htmlFor="adresse" className="font-medium">Adresse</Label>
+      <Input
+        id="adresse"
+        name="adresse"
+        value={value}
+        onChange={handleAddressChange}
+        ref={addressInputRef}
+        onFocus={() => setAddressFocused(true)}
+        onBlur={() => setAddressFocused(false)}
+        className={`${hasError ? 'ring-2 ring-destructive' : ''} ${addressFocused ? 'ring-2 ring-primary/30' : ''}`}
+        placeholder="Gatenavn 123, Postnummer Oslo"
+      />
+      {hasError && errorMessage && (
+        <p className="text-sm font-medium text-destructive">{errorMessage}</p>
+      )}
+      <p className="text-xs text-muted-foreground">Start å skrive for adresseforslag</p>
+    </div>
   );
 };
 

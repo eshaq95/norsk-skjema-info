@@ -1,10 +1,15 @@
 
 import React from 'react';
+import { cn } from "@/lib/utils";
 
-const PrivacyNotice: React.FC = () => {
+interface PrivacyNoticeProps {
+  className?: string;
+}
+
+const PrivacyNotice: React.FC<PrivacyNoticeProps> = ({ className }) => {
   return (
-    <div className="mt-4 text-center text-xs text-gray-500">
-      <p>Ved å sende inn dette skjemaet godtar du våre <a href="#" className="text-norsk-blue hover:underline">vilkår og betingelser</a>.</p>
+    <div className={cn("mt-4 text-center text-xs text-muted-foreground", className)}>
+      <p>Ved å sende inn dette skjemaet godtar du våre <a href="#" className="text-norsk-blue hover:underline font-medium">vilkår og betingelser</a>.</p>
     </div>
   );
 };

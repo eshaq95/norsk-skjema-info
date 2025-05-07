@@ -7,6 +7,7 @@ import AddressInput from './form/AddressInput';
 import SubmitButton from './form/SubmitButton';
 import PrivacyNotice from './form/PrivacyNotice';
 import { validateForm } from '@/utils/validation';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface FormData {
   fornavn: string;
@@ -88,60 +89,64 @@ const NorskForm: React.FC = () => {
   };
 
   return (
-    <div className="norsk-container">
-      <h2 className="norsk-header">Personlig Informasjon</h2>
+    <Card className="w-full max-w-md mx-auto shadow-md">
+      <CardHeader className="bg-norsk-blue text-white rounded-t-md">
+        <CardTitle className="text-xl font-medium">Personlig Informasjon</CardTitle>
+      </CardHeader>
       
-      <form onSubmit={handleSubmit} noValidate>
-        <FormInput
-          id="fornavn"
-          label="Fornavn"
-          value={formData.fornavn}
-          onChange={handleChange}
-          hasError={!!errors.fornavn}
-          errorMessage={errors.fornavn}
-          placeholder="Ole"
-        />
-        
-        <FormInput
-          id="etternavn"
-          label="Etternavn"
-          value={formData.etternavn}
-          onChange={handleChange}
-          hasError={!!errors.etternavn}
-          errorMessage={errors.etternavn}
-          placeholder="Nordmann"
-        />
-        
-        <FormInput
-          id="epost"
-          label="E-post"
-          value={formData.epost}
-          onChange={handleChange}
-          type="email"
-          hasError={!!errors.epost}
-          errorMessage={errors.epost}
-          placeholder="ole.nordmann@eksempel.no"
-        />
-        
-        <PhoneInput
-          value={formData.telefon}
-          onChange={(value) => handleFieldChange('telefon', value)}
-          hasError={!!errors.telefon}
-          errorMessage={errors.telefon}
-        />
-        
-        <AddressInput
-          value={formData.adresse}
-          onChange={(value) => handleFieldChange('adresse', value)}
-          hasError={!!errors.adresse}
-          errorMessage={errors.adresse}
-        />
-        
-        <SubmitButton isSubmitting={isSubmitting} />
-      </form>
-      
-      <PrivacyNotice />
-    </div>
+      <CardContent className="pt-6">
+        <form onSubmit={handleSubmit} noValidate>
+          <FormInput
+            id="fornavn"
+            label="Fornavn"
+            value={formData.fornavn}
+            onChange={handleChange}
+            hasError={!!errors.fornavn}
+            errorMessage={errors.fornavn}
+            placeholder="Ole"
+          />
+          
+          <FormInput
+            id="etternavn"
+            label="Etternavn"
+            value={formData.etternavn}
+            onChange={handleChange}
+            hasError={!!errors.etternavn}
+            errorMessage={errors.etternavn}
+            placeholder="Nordmann"
+          />
+          
+          <FormInput
+            id="epost"
+            label="E-post"
+            value={formData.epost}
+            onChange={handleChange}
+            type="email"
+            hasError={!!errors.epost}
+            errorMessage={errors.epost}
+            placeholder="ole.nordmann@eksempel.no"
+          />
+          
+          <PhoneInput
+            value={formData.telefon}
+            onChange={(value) => handleFieldChange('telefon', value)}
+            hasError={!!errors.telefon}
+            errorMessage={errors.telefon}
+          />
+          
+          <AddressInput
+            value={formData.adresse}
+            onChange={(value) => handleFieldChange('adresse', value)}
+            hasError={!!errors.adresse}
+            errorMessage={errors.adresse}
+          />
+          
+          <SubmitButton isSubmitting={isSubmitting} />
+          
+          <PrivacyNotice />
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 

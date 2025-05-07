@@ -1,6 +1,7 @@
 
 import React from 'react';
-import FormInput from './FormInput';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { formatPhoneNumber } from '@/utils/validation';
 
 interface PhoneInputProps {
@@ -22,17 +23,22 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   };
 
   return (
-    <FormInput
-      id="telefon"
-      label="Telefonnummer"
-      value={value}
-      onChange={handlePhoneInput}
-      hasError={hasError}
-      errorMessage={errorMessage}
-      type="tel"
-      placeholder="123 45 678"
-      description="Format: 123 45 678 eller +47 123 45 678"
-    />
+    <div className="space-y-2 mb-4">
+      <Label htmlFor="telefon" className="font-medium">Telefonnummer</Label>
+      <Input
+        id="telefon"
+        name="telefon"
+        type="tel"
+        value={value}
+        onChange={handlePhoneInput}
+        className={hasError ? 'ring-2 ring-destructive' : ''}
+        placeholder="123 45 678"
+      />
+      {hasError && errorMessage && (
+        <p className="text-sm font-medium text-destructive">{errorMessage}</p>
+      )}
+      <p className="text-xs text-muted-foreground">Format: 123 45 678 eller +47 123 45 678</p>
+    </div>
   );
 };
 

@@ -1,5 +1,8 @@
 
 import React, { ReactNode } from 'react';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FormItem } from "@/components/ui/form";
 
 interface FormInputProps {
   id: string;
@@ -35,9 +38,9 @@ const FormInput: React.FC<FormInputProps> = ({
   description,
 }) => {
   return (
-    <div className="scandi-form-group">
-      <label htmlFor={id} className="scandi-label">{label}</label>
-      <input
+    <div className="space-y-2 mb-4">
+      <Label htmlFor={id} className="font-medium">{label}</Label>
+      <Input
         id={id}
         name={id}
         type={type}
@@ -47,11 +50,13 @@ const FormInput: React.FC<FormInputProps> = ({
         onFocus={onFocus}
         onBlur={onBlur}
         readOnly={readOnly}
-        className={`scandi-input w-full ${hasError ? 'ring-2 ring-norsk-red' : className}`}
+        className={`${hasError ? 'ring-2 ring-destructive' : ''} ${className}`}
         placeholder={placeholder}
       />
-      {hasError && errorMessage && <p className="scandi-error">{errorMessage}</p>}
-      {description && <div className="text-xs text-gray-500 mt-1">{description}</div>}
+      {hasError && errorMessage && (
+        <p className="text-sm font-medium text-destructive">{errorMessage}</p>
+      )}
+      {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
     </div>
   );
 };
