@@ -13,7 +13,7 @@ const Index: React.FC = () => {
         
         <NorskForm />
         
-        <footer className="mt-12 text-center text-sm text-gray-500">
+        <footer className="mt-8 text-center text-sm text-gray-500">
           <p>© 2025 Norsk Skjema Info. Alle rettigheter reservert.</p>
         </footer>
       </div>

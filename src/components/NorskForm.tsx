@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import FormInput from './form/FormInput';
 import PhoneInput from './form/PhoneInput';
 import AddressInput from './form/AddressInput';
+import PostalCodeInput from './form/PostalCodeInput';
 import SubmitButton from './form/SubmitButton';
 import PrivacyNotice from './form/PrivacyNotice';
 import { validateForm } from '@/utils/validation';
@@ -15,6 +16,8 @@ interface FormData {
   epost: string;
   telefon: string;
   adresse: string;
+  postnummer: string;
+  poststed: string;
 }
 
 interface FormErrors {
@@ -23,6 +26,8 @@ interface FormErrors {
   epost?: string;
   telefon?: string;
   adresse?: string;
+  postnummer?: string;
+  poststed?: string;
 }
 
 const NorskForm: React.FC = () => {
@@ -32,6 +37,8 @@ const NorskForm: React.FC = () => {
     epost: '',
     telefon: '',
     adresse: '',
+    postnummer: '',
+    poststed: '',
   });
   
   const [errors, setErrors] = useState<FormErrors>({});
@@ -54,6 +61,22 @@ const NorskForm: React.FC = () => {
     // Clear the error when user starts typing again
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handlePostnummerChange = (postnummer: string, poststed?: string) => {
+    setFormData(prev => ({
+      ...prev,
+      postnummer,
+      ...(poststed ? { poststed } : {})
+    }));
+
+    if (errors.postnummer) {
+      setErrors(prev => ({ ...prev, postnummer: undefined }));
+    }
+
+    if (poststed && errors.poststed) {
+      setErrors(prev => ({ ...prev, poststed: undefined }));
     }
   };
 
@@ -83,6 +106,8 @@ const NorskForm: React.FC = () => {
           epost: '',
           telefon: '',
           adresse: '',
+          postnummer: '',
+          poststed: '',
         });
       }, 1000);
     }
@@ -96,25 +121,28 @@ const NorskForm: React.FC = () => {
       
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} noValidate>
-          <FormInput
-            id="fornavn"
-            label="Fornavn"
-            value={formData.fornavn}
-            onChange={handleChange}
-            hasError={!!errors.fornavn}
-            errorMessage={errors.fornavn}
-            placeholder="Ole"
-          />
-          
-          <FormInput
-            id="etternavn"
-            label="Etternavn"
-            value={formData.etternavn}
-            onChange={handleChange}
-            hasError={!!errors.etternavn}
-            errorMessage={errors.etternavn}
-            placeholder="Nordmann"
-          />
+          {/* Side by side name fields */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <FormInput
+              id="fornavn"
+              label="Fornavn"
+              value={formData.fornavn}
+              onChange={handleChange}
+              hasError={!!errors.fornavn}
+              errorMessage={errors.fornavn}
+              placeholder="Ole"
+            />
+            
+            <FormInput
+              id="etternavn"
+              label="Etternavn"
+              value={formData.etternavn}
+              onChange={handleChange}
+              hasError={!!errors.etternavn}
+              errorMessage={errors.etternavn}
+              placeholder="Nordmann"
+            />
+          </div>
           
           <FormInput
             id="epost"
@@ -140,6 +168,28 @@ const NorskForm: React.FC = () => {
             hasError={!!errors.adresse}
             errorMessage={errors.adresse}
           />
+          
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <PostalCodeInput
+              postnummer={formData.postnummer}
+              poststed={formData.poststed}
+              onPostnummerChange={handlePostnummerChange}
+              onPoststedChange={(value) => handleFieldChange('poststed', value)}
+              hasError={!!errors.postnummer || !!errors.poststed}
+              errorMessage={errors.postnummer || errors.poststed}
+            />
+            
+            <FormInput
+              id="poststed"
+              label="Poststed"
+              value={formData.poststed}
+              onChange={handleChange}
+              hasError={!!errors.poststed}
+              errorMessage={errors.poststed}
+              readOnly={true}
+              className="bg-gray-50"
+            />
+          </div>
           
           <SubmitButton isSubmitting={isSubmitting} />
           
