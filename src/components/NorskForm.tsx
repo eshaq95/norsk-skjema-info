@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -34,50 +33,73 @@ const NorskForm: React.FC = () => {
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const { toast } = useToast();
 
-  // Load Google Maps Places API script
+  // Last Google Maps Places API script
   useEffect(() => {
     const loadGoogleMapsScript = () => {
+      // Sjekk om scriptet allerede er lastet
+      if (document.querySelector('script[src*="maps.googleapis.com/maps/api"]')) {
+        initAutocomplete();
+        return;
+      }
+      
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_API_KEY&libraries=places&callback=initAutocomplete`;
+      // MERK: I en reell implementasjon, erstatt API_NØKKEL med din faktiske Google API-nøkkel
+      script.src = `https://maps.googleapis.com/maps/api/js?key=API_NØKKEL&libraries=places&callback=initAutocomplete&language=no&region=NO`;
       script.async = true;
       script.defer = true;
+      
+      // Definer global callback-funksjon
       window.initAutocomplete = initAutocomplete;
+      
+      // Legg til script i dokumentet
       document.head.appendChild(script);
-    };
 
+      console.log('Google Maps API script legges til');
+      
+      // Cleanup-funksjon for å fjerne callback når komponenten avmonteres
+      return () => {
+        window.initAutocomplete = () => {};
+        // Fjern scriptet hvis nødvendig
+        // document.head.removeChild(script);
+      };
+    };
+    
     if (!window.google) {
-      // Note: In a real implementation, you would need to replace YOUR_GOOGLE_API_KEY with an actual API key
-      // For demo purposes, we're just showing the form UI without the actual Places API functionality
-      console.log('Google Maps API would be loaded here');
-      // loadGoogleMapsScript();
+      loadGoogleMapsScript();
     } else {
       initAutocomplete();
     }
   }, []);
 
   const initAutocomplete = () => {
-    if (!addressInputRef.current || !window.google) return;
+    if (!addressInputRef.current || !window.google?.maps?.places) {
+      console.log('Google Maps Places API er ikke tilgjengelig eller input-feltet er ikke klart');
+      return;
+    }
     
     try {
-      // Set up the autocomplete for address
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(
+      console.log('Initialiserer Google Places Autocomplete');
+      
+      // Sett opp autocomplete for adresse
+      autocompleteRef.current = new google.maps.places.Autocomplete(
         addressInputRef.current,
         { 
           types: ['address'],
-          componentRestrictions: { country: 'no' } // Restrict to Norway
+          componentRestrictions: { country: 'no' } // Begrens til Norge
         }
       );
 
-      // Listen for place selection
+      // Lytt til stedsendringer
       autocompleteRef.current.addListener('place_changed', () => {
         const place = autocompleteRef.current!.getPlace();
         if (place.formatted_address) {
           setFormData(prev => ({ ...prev, adresse: place.formatted_address }));
           setErrors(prev => ({ ...prev, adresse: undefined }));
+          console.log('Valgt adresse:', place.formatted_address);
         }
       });
     } catch (error) {
-      console.error('Error initializing Google Places Autocomplete:', error);
+      console.error('Feil ved initialisering av Google Places Autocomplete:', error);
     }
   };
 
