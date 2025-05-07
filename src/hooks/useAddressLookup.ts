@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 
 // Kartverket API endpoints
-const KARTVERKET_BASE = "https://ws.geonorge.no";
+const KARTVERKET_BASE = "https://api.kartverket.no";
 
 export interface Municipality {
   id: string;
@@ -70,7 +70,10 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
   if (query.length < 2) return [];
   
   try {
-    const url = `${KARTVERKET_BASE}/adresse/v1/sok?sok=${encodeURIComponent(query)}&kommunenummer=${municipalityId}&fuzzy=true&treffPerSide=20`;
+    const url = `${KARTVERKET_BASE}/adresse/v1/sok` + 
+                `?sok=${encodeURIComponent(query)}` + 
+                `&kommunenummer=${encodeURIComponent(municipalityId)}` + 
+                `&fuzzy=true&treffPerSide=20`;
     console.log('Fetching streets from URL:', url);
     
     const res = await fetch(url);
@@ -112,9 +115,79 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
 export const fetchHouseNumbers = async (municipalityId: string, streetName: string): Promise<HouseNumber[]> => {
   console.log('fetchHouseNumbers called with municipalityId:', municipalityId, 'streetName:', streetName);
   try {
-    // First we need to fetch all addresses for this street
-    const url = `${KARTVERKET_BASE}/adresse/v1/sok?sok=${encodeURIComponent(streetName)}&kommunenummer=${municipalityId}&treffPerSide=100`;
-    console.log('Fetching house numbers from URL:', url);
+    // First we need to get the vegadresseId for this street
+    const streetUrl = `${KARTVERKET_BASE}/adresse/v1/sok` +
+                      `?sok=${encodeURIComponent(streetName)}` +
+                      `&kommunenummer=${encodeURIComponent(municipalityId)}` +
+                      `&treffPerSide=1`;  // We just need one result to get the vegadresseId
+    
+    console.log('Fetching street ID from URL:', streetUrl);
+    const streetRes = await fetch(streetUrl);
+    
+    if (!streetRes.ok) {
+      throw new Error(`HTTP error! status: ${streetRes.status}`);
+    }
+    
+    const streetData = await streetRes.json();
+    
+    // If we have a vegadresseId, use it to get all house numbers for this street
+    if (streetData.adresser && streetData.adresser.length > 0 && streetData.adresser[0].vegadresseId) {
+      const vegadresseId = streetData.adresser[0].vegadresseId;
+      console.log(`Found vegadresseId: ${vegadresseId} for street ${streetName}`);
+      
+      // Now fetch all house numbers for this vegadresse
+      const houseNumberUrl = `${KARTVERKET_BASE}/adresse/v1/adresser` +
+                            `?vegadresseId=${encodeURIComponent(vegadresseId)}`;
+      
+      console.log('Fetching house numbers from URL:', houseNumberUrl);
+      const houseNumberRes = await fetch(houseNumberUrl);
+      
+      if (!houseNumberRes.ok) {
+        throw new Error(`HTTP error! status: ${houseNumberRes.status}`);
+      }
+      
+      const houseNumberData = await houseNumberRes.json();
+      
+      if (Array.isArray(houseNumberData)) {
+        // Map the response to our HouseNumber interface
+        const numbers = houseNumberData.map((adr: any) => {
+          let label = adr.nummer.toString();
+          if (adr.bokstav) {
+            label += adr.bokstav;
+          }
+          
+          return {
+            label: label,
+            postnr: adr.postnummer,
+            poststed: adr.poststed,
+          };
+        });
+        
+        // Sort house numbers
+        const sortedNumbers = numbers.sort((a: HouseNumber, b: HouseNumber) => {
+          // Try to sort numerically if possible
+          const aNum = parseInt(a.label.replace(/[^0-9]/g, ''));
+          const bNum = parseInt(b.label.replace(/[^0-9]/g, ''));
+          
+          if (!isNaN(aNum) && !isNaN(bNum)) {
+            if (aNum !== bNum) return aNum - bNum;
+          }
+          
+          // Fall back to string comparison
+          return a.label.localeCompare(b.label, 'no');
+        });
+        
+        console.log(`Found ${sortedNumbers.length} house numbers`);
+        return sortedNumbers;
+      }
+    }
+    
+    // Fallback to the old method if vegadresseId approach fails
+    console.log('Using fallback method for fetching house numbers');
+    const url = `${KARTVERKET_BASE}/adresse/v1/sok` +
+                `?sok=${encodeURIComponent(streetName)}` +
+                `&kommunenummer=${encodeURIComponent(municipalityId)}` +
+                `&treffPerSide=100`;
     
     const res = await fetch(url);
     
@@ -156,7 +229,7 @@ export const fetchHouseNumbers = async (municipalityId: string, streetName: stri
         return a.label.localeCompare(b.label, 'no');
       });
     
-    console.log(`Found ${numbers.length} house numbers`);
+    console.log(`Found ${numbers.length} house numbers using fallback method`);
     return numbers;
   } catch (error) {
     console.error('Error fetching house numbers:', error);
