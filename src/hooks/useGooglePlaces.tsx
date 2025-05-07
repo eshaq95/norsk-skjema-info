@@ -1,6 +1,13 @@
 
 import { useEffect, useRef } from 'react';
-import '../types/google'; // Import the Google types
+
+// Define Google types inline to avoid import issues
+declare global {
+  interface Window {
+    google: typeof google;
+    initAutocomplete: () => void;
+  }
+}
 
 interface UseGooglePlacesProps {
   inputRef: React.RefObject<HTMLInputElement>;
