@@ -1,17 +1,10 @@
 
 import { useEffect, useRef } from 'react';
+import '../types/google'; // Import the Google types
 
 interface UseGooglePlacesProps {
   inputRef: React.RefObject<HTMLInputElement>;
   onPlaceSelected: (place: string) => void;
-}
-
-// Deklarere global initAutocomplete funksjon
-declare global {
-  interface Window {
-    initAutocomplete: () => void;
-    google: typeof google;
-  }
 }
 
 export const useGooglePlaces = ({ inputRef, onPlaceSelected }: UseGooglePlacesProps) => {
