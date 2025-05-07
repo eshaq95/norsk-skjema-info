@@ -37,7 +37,6 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       {hasError && errorMessage && (
         <p className="text-sm font-medium text-destructive">{errorMessage}</p>
       )}
-      <p className="text-xs text-muted-foreground">Format: 123 45 678 eller +47 123 45 678</p>
     </div>
   );
 };
