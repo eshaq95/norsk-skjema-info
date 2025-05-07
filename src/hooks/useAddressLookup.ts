@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from "react";
 
-// Kartverket API endpoints
-const KARTVERKET_BASE = "https://api.kartverket.no";
+// Updated API endpoints that support CORS
+const GEO_BASE = "https://ws.geonorge.no";
 
 // Helper function to normalize strings for comparison (handles Norwegian characters)
 const canon = (s: string): string => 
@@ -38,8 +38,8 @@ export const useMunicipalities = () => {
     try {
       // Fetch all municipalities once and cache them
       if (!municipalitiesCache) {
-        console.log('Fetching all municipalities from Kartverket');
-        const res = await fetch(`${KARTVERKET_BASE}/kommuneinfo/v1/kommuner`);
+        console.log('Fetching all municipalities from Geonorge');
+        const res = await fetch(`${GEO_BASE}/kommuneinfo/v1/kommuner`);
         
         if (!res.ok) {
           console.error(`HTTP error! status: ${res.status}`);
@@ -91,7 +91,7 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
   if (query.length < 2) return [];
   
   try {
-    const url = `${KARTVERKET_BASE}/adresse/v1/sok` + 
+    const url = `${GEO_BASE}/adresser/v1/sok` + 
                 `?sok=${encodeURIComponent(query)}` + 
                 `&kommunenummer=${encodeURIComponent(municipalityId)}` + 
                 `&fuzzy=true&treffPerSide=20`;
@@ -137,7 +137,7 @@ export const fetchHouseNumbers = async (municipalityId: string, streetName: stri
   console.log('fetchHouseNumbers called with municipalityId:', municipalityId, 'streetName:', streetName);
   try {
     // First we need to get the vegadresseId for this street
-    const streetUrl = `${KARTVERKET_BASE}/adresse/v1/sok` +
+    const streetUrl = `${GEO_BASE}/adresser/v1/sok` +
                       `?sok=${encodeURIComponent(streetName)}` +
                       `&kommunenummer=${encodeURIComponent(municipalityId)}` +
                       `&treffPerSide=1`;  // We just need one result to get the vegadresseId
@@ -157,7 +157,7 @@ export const fetchHouseNumbers = async (municipalityId: string, streetName: stri
       console.log(`Found vegadresseId: ${vegadresseId} for street ${streetName}`);
       
       // Now fetch all house numbers for this vegadresse
-      const houseNumberUrl = `${KARTVERKET_BASE}/adresse/v1/adresser` +
+      const houseNumberUrl = `${GEO_BASE}/adresser/v1/adresser` +
                             `?vegadresseId=${encodeURIComponent(vegadresseId)}`;
       
       console.log('Fetching house numbers from URL:', houseNumberUrl);
@@ -205,7 +205,7 @@ export const fetchHouseNumbers = async (municipalityId: string, streetName: stri
     
     // Fallback to the old method if vegadresseId approach fails
     console.log('Using fallback method for fetching house numbers');
-    const url = `${KARTVERKET_BASE}/adresse/v1/sok` +
+    const url = `${GEO_BASE}/adresser/v1/sok` +
                 `?sok=${encodeURIComponent(streetName)}` +
                 `&kommunenummer=${encodeURIComponent(municipalityId)}` +
                 `&treffPerSide=100`;

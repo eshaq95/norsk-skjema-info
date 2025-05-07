@@ -47,9 +47,21 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
       }
     };
     
+    // Close dropdown when focus moves to another input
+    const handleFocusOut = (event: FocusEvent) => {
+      // Small delay to allow click events to process first
+      setTimeout(() => {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.relatedTarget as Node)) {
+          setIsOpen(false);
+        }
+      }, 100);
+    };
+    
     document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('focusout', handleFocusOut);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('focusout', handleFocusOut);
     };
   }, []);
 
@@ -81,6 +93,7 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
           placeholder="Skriv inn kommune (minst 2 bokstaver)"
           onClick={handleInputClick}
           onFocus={() => query.length >= 2 && options.length > 0 && setIsOpen(true)}
+          onBlur={() => setTimeout(() => setIsOpen(false), 150)}
         />
         
         {loading && (
