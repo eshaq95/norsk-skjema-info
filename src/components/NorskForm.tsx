@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import FormInput from './form/FormInput';
@@ -83,7 +82,9 @@ const NorskForm: React.FC = () => {
   useEffect(() => {
     const fetchMunicipalities = async () => {
       if (kommuneQuery.length >= 2) {
+        console.log('Fetching municipalities for query:', kommuneQuery);
         const options = await getMunicipalities(kommuneQuery);
+        console.log('Municipality options:', options);
         setKommuneOptions(options);
       } else {
         setKommuneOptions([]);
@@ -92,13 +93,15 @@ const NorskForm: React.FC = () => {
     
     const timeoutId = setTimeout(fetchMunicipalities, 300);
     return () => clearTimeout(timeoutId);
-  }, [kommuneQuery]);
+  }, [kommuneQuery, getMunicipalities]);
 
   // Fetch streets when municipality and query changes
   useEffect(() => {
     const fetchStreetOptions = async () => {
       if (formData.kommuneId && gateQuery.length >= 2) {
+        console.log('Fetching streets for municipality:', formData.kommuneId, 'query:', gateQuery);
         const options = await fetchStreets(formData.kommuneId, gateQuery);
+        console.log('Street options:', options);
         setGateOptions(options);
       } else {
         setGateOptions([]);
@@ -113,7 +116,9 @@ const NorskForm: React.FC = () => {
   useEffect(() => {
     const loadHouseNumbers = async () => {
       if (formData.kommuneId && formData.gateId) {
+        console.log('Fetching house numbers for street:', formData.gateId);
         const options = await fetchHouseNumbers(formData.kommuneId, formData.gateId);
+        console.log('House number options:', options);
         setHusnummerOptions(options);
       } else {
         setHusnummerOptions([]);
@@ -143,6 +148,7 @@ const NorskForm: React.FC = () => {
   };
 
   const handleKommuneSelect = (municipality: Municipality) => {
+    console.log('Selected municipality:', municipality);
     setFormData(prev => ({
       ...prev,
       kommune: municipality.name,
@@ -162,6 +168,7 @@ const NorskForm: React.FC = () => {
   };
 
   const handleGateSelect = (street: Street) => {
+    console.log('Selected street:', street);
     setFormData(prev => ({
       ...prev,
       gate: street.name,
@@ -180,6 +187,7 @@ const NorskForm: React.FC = () => {
 
   const handleHusnummerSelect = (husnummer: string) => {
     const selected = husnummerOptions.find(h => h.label === husnummer);
+    console.log('Selected house number:', husnummer, 'Details:', selected);
     
     if (selected) {
       setFormData(prev => ({
@@ -313,7 +321,7 @@ const NorskForm: React.FC = () => {
                   onChange={(e) => setGateQuery(e.target.value)}
                   className="w-full"
                   disabled={!formData.kommuneId}
-                  placeholder="Skriv inn gatenavn"
+                  placeholder={formData.kommuneId ? "Skriv inn gatenavn" : "Velg kommune først"}
                 />
                 {gateOptions.length > 0 && (
                   <ul className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
@@ -343,9 +351,9 @@ const NorskForm: React.FC = () => {
                 onValueChange={handleHusnummerSelect}
               >
                 <SelectTrigger id="husnummer" className="bg-gray-100 w-full">
-                  <SelectValue placeholder="Velg husnummer" />
+                  <SelectValue placeholder={formData.gateId ? "Velg husnummer" : "Velg gate først"} />
                 </SelectTrigger>
-                <SelectContent className="bg-white">
+                <SelectContent className="bg-white z-50">
                   {husnummerOptions.map((num) => (
                     <SelectItem key={num.label} value={num.label}>
                       {num.label}
