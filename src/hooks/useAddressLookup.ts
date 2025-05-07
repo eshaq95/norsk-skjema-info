@@ -1,8 +1,14 @@
-
 import { useState, useEffect } from "react";
 
 // Kartverket API endpoints
 const KARTVERKET_BASE = "https://api.kartverket.no";
+
+// Helper function to normalize strings for comparison (handles Norwegian characters)
+const canon = (s: string): string => 
+  s.normalize("NFD")                // decompose diacritical marks
+   .replace(/[\u0300-\u036f]/g, "") // remove diacritics
+   .toLowerCase()                   // lowercase
+   .trim();                         // remove extra spaces
 
 export interface Municipality {
   id: string;
@@ -48,10 +54,12 @@ export const useMunicipalities = () => {
         console.log(`Cached ${municipalitiesCache.length} municipalities`);
       }
       
-      // Filter municipalities based on query with defensive check for name property
-      const lowercaseQuery = query.toLowerCase();
-      const filtered = municipalitiesCache.filter(
-        kommune => kommune.name && kommune.name.toLowerCase().includes(lowercaseQuery)
+      // Filter municipalities with canonical string comparison
+      const canonicalQuery = canon(query);
+      console.log('Canonical query:', canonicalQuery);
+      
+      const filtered = municipalitiesCache.filter(kommune => 
+        kommune.name && canon(kommune.name).includes(canonicalQuery)
       ).slice(0, 20); // Limit to 20 results
       
       console.log(`Found ${filtered.length} municipalities matching "${query}"`);
