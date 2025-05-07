@@ -236,7 +236,7 @@ const NorskForm: React.FC = () => {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-md">
+    <Card className="w-full max-w-3xl mx-auto shadow-md">
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} noValidate>
           {/* Side by side name fields */}
