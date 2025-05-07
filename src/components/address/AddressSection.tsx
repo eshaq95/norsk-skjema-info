@@ -32,22 +32,25 @@ const AddressSection: React.FC<AddressSectionProps> = ({
   onAddressChange 
 }) => {
   const [husnummerOptions, setHusnummerOptions] = useState<HouseNumber[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Fetch house numbers when street is selected
   useEffect(() => {
     const loadHouseNumbers = async () => {
-      if (formData.kommuneId && formData.gateId) {
-        console.log('Fetching house numbers for street:', formData.gateId);
-        const options = await fetchHouseNumbers(formData.kommuneId, formData.gateId);
+      if (formData.kommuneId && formData.gate) {
+        setIsLoading(true);
+        console.log('Fetching house numbers for street:', formData.gate);
+        const options = await fetchHouseNumbers(formData.kommuneId, formData.gate);
         console.log('House number options received:', options);
         setHusnummerOptions(options);
+        setIsLoading(false);
       } else {
         setHusnummerOptions([]);
       }
     };
     
     loadHouseNumbers();
-  }, [formData.kommuneId, formData.gateId]);
+  }, [formData.kommuneId, formData.gate]);
 
   const handleKommuneSelect = (municipality: Municipality) => {
     console.log('Selected municipality in AddressSection:', municipality);
@@ -101,7 +104,7 @@ const AddressSection: React.FC<AddressSectionProps> = ({
           options={husnummerOptions}
           onHouseNumberSelect={handleHusnummerSelect}
           value={formData.husnummer}
-          disabled={!formData.gateId}
+          disabled={!formData.gate || isLoading}
           error={errors.husnummer}
         />
       </div>

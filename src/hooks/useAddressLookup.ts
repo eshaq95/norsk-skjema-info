@@ -1,8 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const ETUR = "https://api.entur.io/geocoder/v1";
-const HDR = { headers: { "ET-Client-Name": "norsk-skjema-app" } };
+// Kartverket API endpoints
+const KARTVERKET_BASE = "https://ws.geonorge.no";
 
 export interface Municipality {
   id: string;
@@ -20,37 +20,42 @@ export interface HouseNumber {
   poststed: string;
 }
 
+// Cache for municipalities to avoid repeated fetching
+let municipalitiesCache: Municipality[] | null = null;
+
 export const useMunicipalities = () => {
   const fetchMunicipalities = async (query: string): Promise<Municipality[]> => {
     console.log('Fetching municipalities with query:', query);
     if (query.length < 2) return [];
     
     try {
-      // Make sure the text parameter is properly included
-      const url = `${ETUR}/autocomplete?text=${encodeURIComponent(query)}&layers=municipality&size=20`;
-      console.log('Fetching municipalities from URL:', url);
-      
-      const res = await fetch(url, HDR);
-      
-      if (!res.ok) {
-        console.error(`HTTP error! status: ${res.status}`);
-        return [];
+      // Fetch all municipalities once and cache them
+      if (!municipalitiesCache) {
+        console.log('Fetching all municipalities from Kartverket');
+        const res = await fetch(`${KARTVERKET_BASE}/kommuneinfo/v1/kommuner`);
+        
+        if (!res.ok) {
+          console.error(`HTTP error! status: ${res.status}`);
+          return [];
+        }
+        
+        const data = await res.json();
+        municipalitiesCache = data.map((kommune: any) => ({
+          id: kommune.kommunenummer,
+          name: kommune.navn,
+        }));
+        
+        console.log(`Cached ${municipalitiesCache.length} municipalities`);
       }
       
-      const data = await res.json();
+      // Filter municipalities based on query
+      const lowercaseQuery = query.toLowerCase();
+      const filtered = municipalitiesCache.filter(
+        kommune => kommune.name.toLowerCase().includes(lowercaseQuery)
+      ).slice(0, 20); // Limit to 20 results
       
-      if (!data.features || !Array.isArray(data.features)) {
-        console.error('Unexpected API response format:', data);
-        return [];
-      }
-      
-      const mapped = data.features.map((f: any) => ({
-        id: f.properties.id,
-        name: f.properties.name,
-      }));
-      
-      console.log(`Fetched ${mapped.length} municipalities`);
-      return mapped;
+      console.log(`Found ${filtered.length} municipalities matching "${query}"`);
+      return filtered;
     } catch (error) {
       console.error('Error fetching municipalities:', error);
       return [];
@@ -65,9 +70,10 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
   if (query.length < 2) return [];
   
   try {
-    const url = `${ETUR}/autocomplete?text=${encodeURIComponent(query)}&layers=street&municipality=${municipalityId}`;
+    const url = `${KARTVERKET_BASE}/adresse/v1/sok?sok=${encodeURIComponent(query)}&kommunenummer=${municipalityId}&fuzzy=true&treffPerSide=20`;
     console.log('Fetching streets from URL:', url);
-    const res = await fetch(url, HDR);
+    
+    const res = await fetch(url);
     
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
@@ -75,16 +81,26 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
     
     const data = await res.json();
     
-    if (!data.features || !Array.isArray(data.features)) {
+    if (!data.adresser || !Array.isArray(data.adresser)) {
       console.error('Unexpected API response format for streets:', data);
       return [];
     }
     
-    const streets = data.features.map((f: any) => ({
-      id: f.properties.id,
-      name: f.properties.name,
-    }));
+    // Create a Set to avoid duplicate streets
+    const uniqueStreets = new Map<string, Street>();
     
+    data.adresser.forEach((adr: any) => {
+      if (adr.adressenavn && adr.adressenavn.toLowerCase().includes(query.toLowerCase())) {
+        // Use the adressenavn as both id and name if no vegadresseId is available
+        const id = adr.vegadresseId || adr.adressenavn;
+        uniqueStreets.set(adr.adressenavn, {
+          id: id,
+          name: adr.adressenavn,
+        });
+      }
+    });
+    
+    const streets = Array.from(uniqueStreets.values());
     console.log(`Found ${streets.length} matching streets`);
     return streets;
   } catch (error) {
@@ -93,12 +109,14 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
   }
 };
 
-export const fetchHouseNumbers = async (municipalityId: string, streetId: string): Promise<HouseNumber[]> => {
-  console.log('fetchHouseNumbers called with municipalityId:', municipalityId, 'streetId:', streetId);
+export const fetchHouseNumbers = async (municipalityId: string, streetName: string): Promise<HouseNumber[]> => {
+  console.log('fetchHouseNumbers called with municipalityId:', municipalityId, 'streetName:', streetName);
   try {
-    const url = `${ETUR}/addresses?municipality=${municipalityId}&street=${streetId}`;
+    // First we need to fetch all addresses for this street
+    const url = `${KARTVERKET_BASE}/adresse/v1/sok?sok=${encodeURIComponent(streetName)}&kommunenummer=${municipalityId}&treffPerSide=100`;
     console.log('Fetching house numbers from URL:', url);
-    const res = await fetch(url, HDR);
+    
+    const res = await fetch(url);
     
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
@@ -106,18 +124,37 @@ export const fetchHouseNumbers = async (municipalityId: string, streetId: string
     
     const data = await res.json();
     
-    if (!data.features || !Array.isArray(data.features)) {
+    if (!data.adresser || !Array.isArray(data.adresser)) {
       console.error('Unexpected API response format for house numbers:', data);
       return [];
     }
     
-    const numbers = data.features
-      .map((f: any) => ({
-        label: f.properties.streetNumber,
-        postnr: f.properties.postCode,
-        poststed: f.properties.postPlace,
-      }))
-      .sort((a: HouseNumber, b: HouseNumber) => a.label.localeCompare(b.label, 'no'));
+    const numbers = data.adresser
+      .filter((adr: any) => adr.adressenavn === streetName)
+      .map((adr: any) => {
+        let label = adr.nummer.toString();
+        if (adr.bokstav) {
+          label += adr.bokstav;
+        }
+        
+        return {
+          label: label,
+          postnr: adr.postnummer,
+          poststed: adr.poststed,
+        };
+      })
+      .sort((a: HouseNumber, b: HouseNumber) => {
+        // Try to sort numerically if possible
+        const aNum = parseInt(a.label.replace(/[^0-9]/g, ''));
+        const bNum = parseInt(b.label.replace(/[^0-9]/g, ''));
+        
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          if (aNum !== bNum) return aNum - bNum;
+        }
+        
+        // Fall back to string comparison
+        return a.label.localeCompare(b.label, 'no');
+      });
     
     console.log(`Found ${numbers.length} house numbers`);
     return numbers;

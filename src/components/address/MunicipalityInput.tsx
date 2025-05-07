@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Municipality, useMunicipalities } from '@/hooks/useAddressLookup';
 import { Loader2 } from 'lucide-react';
@@ -14,6 +14,7 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
   const [options, setOptions] = useState<Municipality[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
   const getMunicipalities = useMunicipalities();
   
@@ -40,13 +41,15 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => {
-      setIsOpen(false);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
     };
     
-    document.addEventListener('click', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -65,7 +68,7 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
   };
 
   return (
-    <div className="mb-4">
+    <div className="mb-4" ref={dropdownRef}>
       <label htmlFor="kommune" className="block text-sm font-medium text-norsk-dark mb-1">
         Kommune
       </label>
@@ -87,14 +90,11 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
         )}
         
         {isOpen && options.length > 0 && (
-          <ul className="absolute z-[100] w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto mt-1">
+          <ul className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto mt-1">
             {options.map((kommune) => (
               <li
                 key={kommune.id}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSelect(kommune);
-                }}
+                onClick={() => handleSelect(kommune)}
                 className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
               >
                 {kommune.name}
@@ -103,8 +103,8 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
           </ul>
         )}
         
-        {query.length >= 2 && !loading && options.length === 0 && (
-          <div className="absolute z-[100] w-full bg-white border border-gray-200 rounded-md shadow-lg p-2 mt-1">
+        {query.length >= 2 && !loading && isOpen && options.length === 0 && (
+          <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg p-2 mt-1">
             <p className="text-sm text-gray-500">Ingen treff</p>
           </div>
         )}
