@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import FormInput from './form/FormInput';
@@ -235,7 +236,7 @@ const NorskForm: React.FC = () => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto shadow-md">
+    <Card className="w-full max-w-2xl mx-auto shadow-md">
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} noValidate>
           {/* Side by side name fields */}
@@ -298,64 +299,63 @@ const NorskForm: React.FC = () => {
             </div>
           </div>
           
-          {/* Gate and Husnummer side by side - only show when kommune is selected */}
-          {formData.kommuneId && (
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              {/* Gate autocomplete */}
-              <div>
-                <label htmlFor="gate" className="block text-sm font-medium text-norsk-dark mb-1">
-                  Gate - eller stedsadresse
-                </label>
-                <div className="relative">
-                  <Input
-                    id="gate"
-                    value={gateQuery}
-                    onChange={(e) => setGateQuery(e.target.value)}
-                    className="w-full"
-                    placeholder="Skriv inn gatenavn"
-                  />
-                  {gateOptions.length > 0 && (
-                    <ul className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                      {gateOptions.map((gate) => (
-                        <li
-                          key={gate.id}
-                          onClick={() => handleGateSelect(gate)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {gate.name}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {errors.gate && <p className="text-norsk-red text-sm mt-1">{errors.gate}</p>}
-                </div>
-              </div>
-
-              {/* Husnummer dropdown */}
-              <div>
-                <label htmlFor="husnummer" className="block text-sm font-medium text-norsk-dark mb-1">
-                  Husnummer
-                </label>
-                <Select
-                  disabled={!formData.gateId || husnummerOptions.length === 0}
-                  value={formData.husnummer}
-                  onValueChange={handleHusnummerSelect}
-                >
-                  <SelectTrigger className="bg-gray-100 w-full">
-                    <SelectValue placeholder="Velg husnummer" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    {husnummerOptions.map((num) => (
-                      <SelectItem key={num.label} value={num.label}>
-                        {num.label}
-                      </SelectItem>
+          {/* ALWAYS display Gate and Husnummer side by side */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            {/* Gate autocomplete */}
+            <div>
+              <label htmlFor="gate" className="block text-sm font-medium text-norsk-dark mb-1">
+                Gate - eller stedsadresse
+              </label>
+              <div className="relative">
+                <Input
+                  id="gate"
+                  value={gateQuery}
+                  onChange={(e) => setGateQuery(e.target.value)}
+                  className="w-full"
+                  disabled={!formData.kommuneId}
+                  placeholder="Skriv inn gatenavn"
+                />
+                {gateOptions.length > 0 && (
+                  <ul className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {gateOptions.map((gate) => (
+                      <li
+                        key={gate.id}
+                        onClick={() => handleGateSelect(gate)}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        {gate.name}
+                      </li>
                     ))}
-                  </SelectContent>
-                </Select>
-                {errors.husnummer && <p className="text-norsk-red text-sm mt-1">{errors.husnummer}</p>}
+                  </ul>
+                )}
+                {errors.gate && <p className="text-norsk-red text-sm mt-1">{errors.gate}</p>}
               </div>
             </div>
-          )}
+
+            {/* Husnummer dropdown */}
+            <div>
+              <label htmlFor="husnummer" className="block text-sm font-medium text-norsk-dark mb-1">
+                Husnummer
+              </label>
+              <Select
+                disabled={!formData.gateId || husnummerOptions.length === 0}
+                value={formData.husnummer}
+                onValueChange={handleHusnummerSelect}
+              >
+                <SelectTrigger id="husnummer" className="bg-gray-100 w-full">
+                  <SelectValue placeholder="Velg husnummer" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  {husnummerOptions.map((num) => (
+                    <SelectItem key={num.label} value={num.label}>
+                      {num.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.husnummer && <p className="text-norsk-red text-sm mt-1">{errors.husnummer}</p>}
+            </div>
+          </div>
           
           {/* Postnummer and Poststed side by side - readonly */}
           <div className="grid grid-cols-2 gap-4 mb-4">
