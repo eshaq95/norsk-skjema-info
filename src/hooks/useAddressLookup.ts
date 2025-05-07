@@ -23,16 +23,26 @@ export interface HouseNumber {
 export const useMunicipalities = () => {
   const [municipalities, setMunicipalities] = useState<Municipality[]>([]);
   
-  return async (query: string): Promise<Municipality[]> => {
-    console.log('useMunicipalities called with query:', query);
+  const fetchMunicipalities = async (query: string): Promise<Municipality[]> => {
+    console.log('Fetching municipalities with query:', query);
     if (query.length < 2) return [];
     
     try {
       // Cache municipalities in state for demo purposes
       if (!municipalities.length) {
-        console.log('Fetching all municipalities...');
+        console.log('Fetching all municipalities from Entur API...');
         const res = await fetch(`${ETUR}/autocomplete?layers=municipality&size=356`, HDR);
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
         const data = await res.json();
+        
+        if (!data.features || !Array.isArray(data.features)) {
+          console.error('Unexpected API response format:', data);
+          return [];
+        }
         
         const mapped = data.features.map((f: any) => ({
           id: f.properties.id,
@@ -60,6 +70,8 @@ export const useMunicipalities = () => {
       return [];
     }
   };
+  
+  return fetchMunicipalities;
 };
 
 export const fetchStreets = async (municipalityId: string, query: string): Promise<Street[]> => {
@@ -68,9 +80,19 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
   
   try {
     const url = `${ETUR}/autocomplete?layers=street&municipality=${municipalityId}&text=${encodeURIComponent(query)}`;
-    console.log('Fetching from URL:', url);
+    console.log('Fetching streets from URL:', url);
     const res = await fetch(url, HDR);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
     const data = await res.json();
+    
+    if (!data.features || !Array.isArray(data.features)) {
+      console.error('Unexpected API response format for streets:', data);
+      return [];
+    }
     
     const streets = data.features.map((f: any) => ({
       id: f.properties.id,
@@ -89,9 +111,19 @@ export const fetchHouseNumbers = async (municipalityId: string, streetId: string
   console.log('fetchHouseNumbers called with municipalityId:', municipalityId, 'streetId:', streetId);
   try {
     const url = `${ETUR}/addresses?municipality=${municipalityId}&street=${streetId}`;
-    console.log('Fetching from URL:', url);
+    console.log('Fetching house numbers from URL:', url);
     const res = await fetch(url, HDR);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
     const data = await res.json();
+    
+    if (!data.features || !Array.isArray(data.features)) {
+      console.error('Unexpected API response format for house numbers:', data);
+      return [];
+    }
     
     const numbers = data.features
       .map((f: any) => ({
