@@ -13,7 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 interface FormData {
   fornavn: string;
   etternavn: string;
-  epost: string;
   telefon: string;
   adresse: string;
   postnummer: string;
@@ -23,7 +22,6 @@ interface FormData {
 interface FormErrors {
   fornavn?: string;
   etternavn?: string;
-  epost?: string;
   telefon?: string;
   adresse?: string;
   postnummer?: string;
@@ -34,7 +32,6 @@ const NorskForm: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     fornavn: '',
     etternavn: '',
-    epost: '',
     telefon: '',
     adresse: '',
     postnummer: '',
@@ -103,7 +100,6 @@ const NorskForm: React.FC = () => {
         setFormData({
           fornavn: '',
           etternavn: '',
-          epost: '',
           telefon: '',
           adresse: '',
           postnummer: '',
@@ -143,17 +139,6 @@ const NorskForm: React.FC = () => {
               placeholder="Nordmann"
             />
           </div>
-          
-          <FormInput
-            id="epost"
-            label="E-post"
-            value={formData.epost}
-            onChange={handleChange}
-            type="email"
-            hasError={!!errors.epost}
-            errorMessage={errors.epost}
-            placeholder="ole.nordmann@eksempel.no"
-          />
           
           <PhoneInput
             value={formData.telefon}

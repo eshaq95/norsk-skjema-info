@@ -2,17 +2,19 @@
 interface FormData {
   fornavn: string;
   etternavn: string;
-  epost: string;
   telefon: string;
   adresse: string;
+  postnummer: string;
+  poststed: string;
 }
 
 interface FormErrors {
   fornavn?: string;
   etternavn?: string;
-  epost?: string;
   telefon?: string;
   adresse?: string;
+  postnummer?: string;
+  poststed?: string;
 }
 
 export const validateForm = (formData: FormData): FormErrors => {
@@ -26,13 +28,6 @@ export const validateForm = (formData: FormData): FormErrors => {
   // Validate etternavn
   if (!formData.etternavn.trim()) {
     errors.etternavn = 'Etternavn er påkrevd';
-  }
-  
-  // Validate epost
-  if (!formData.epost.trim()) {
-    errors.epost = 'E-post er påkrevd';
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.epost)) {
-    errors.epost = 'Ugyldig e-postformat';
   }
   
   // Validate telefon (Norwegian phone number format)
@@ -49,6 +44,18 @@ export const validateForm = (formData: FormData): FormErrors => {
   // Validate adresse
   if (!formData.adresse.trim()) {
     errors.adresse = 'Adresse er påkrevd';
+  }
+  
+  // Validate postnummer
+  if (!formData.postnummer.trim()) {
+    errors.postnummer = 'Postnummer er påkrevd';
+  } else if (formData.postnummer.length !== 4 || !/^\d+$/.test(formData.postnummer)) {
+    errors.postnummer = 'Postnummer må være 4 siffer';
+  }
+  
+  // Validate poststed
+  if (!formData.poststed.trim()) {
+    errors.poststed = 'Poststed er påkrevd';
   }
   
   return errors;
