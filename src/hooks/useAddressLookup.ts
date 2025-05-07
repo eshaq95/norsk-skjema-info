@@ -28,43 +28,31 @@ export const useMunicipalities = () => {
     if (query.length < 2) return [];
     
     try {
-      // Cache municipalities in state for demo purposes
-      if (!municipalities.length) {
-        console.log('Fetching all municipalities from Entur API...');
-        const res = await fetch(`${ETUR}/autocomplete?layers=municipality&size=356`, HDR);
-        
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        
-        const data = await res.json();
-        
-        if (!data.features || !Array.isArray(data.features)) {
-          console.error('Unexpected API response format:', data);
-          return [];
-        }
-        
-        const mapped = data.features.map((f: any) => ({
-          id: f.properties.id,
-          name: f.properties.name,
-        }));
-        
-        console.log(`Fetched ${mapped.length} municipalities`);
-        setMunicipalities(mapped);
-        
-        // Return filtered results for first query
-        return mapped
-          .filter(m => m.name.toLowerCase().includes(query.toLowerCase()))
-          .slice(0, 10);
+      // Add the required text parameter to the API call
+      const url = `${ETUR}/autocomplete?text=${encodeURIComponent(query)}&layers=municipality&size=20`;
+      console.log('Fetching municipalities from URL:', url);
+      
+      const res = await fetch(url, HDR);
+      
+      if (!res.ok) {
+        console.error(`HTTP error! status: ${res.status}`);
+        return [];
       }
       
-      // Return from cached results
-      const filtered = municipalities
-        .filter(m => m.name.toLowerCase().includes(query.toLowerCase()))
-        .slice(0, 10);
+      const data = await res.json();
       
-      console.log(`Found ${filtered.length} matching municipalities for "${query}"`);
-      return filtered;
+      if (!data.features || !Array.isArray(data.features)) {
+        console.error('Unexpected API response format:', data);
+        return [];
+      }
+      
+      const mapped = data.features.map((f: any) => ({
+        id: f.properties.id,
+        name: f.properties.name,
+      }));
+      
+      console.log(`Fetched ${mapped.length} municipalities`);
+      return mapped;
     } catch (error) {
       console.error('Error fetching municipalities:', error);
       return [];
