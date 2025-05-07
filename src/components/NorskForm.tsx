@@ -247,7 +247,7 @@ const NorskForm: React.FC = () => {
               onChange={handleChange}
               hasError={!!errors.fornavn}
               errorMessage={errors.fornavn}
-              placeholder="Ole"
+              placeholder="Skriv inn fornavn"
             />
             
             <FormInput
@@ -257,7 +257,7 @@ const NorskForm: React.FC = () => {
               onChange={handleChange}
               hasError={!!errors.etternavn}
               errorMessage={errors.etternavn}
-              placeholder="Nordmann"
+              placeholder="Skriv inn etternavn"
             />
           </div>
           
@@ -279,7 +279,7 @@ const NorskForm: React.FC = () => {
                 value={kommuneQuery}
                 onChange={(e) => setKommuneQuery(e.target.value)}
                 className="w-full"
-                placeholder="Skriv kommune..."
+                placeholder="Skriv inn kommune"
               />
               {kommuneOptions.length > 0 && (
                 <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
@@ -310,7 +310,7 @@ const NorskForm: React.FC = () => {
                   value={gateQuery}
                   onChange={(e) => setGateQuery(e.target.value)}
                   className="w-full"
-                  placeholder="Skriv gatenavn..."
+                  placeholder="Skriv inn gatenavn"
                 />
                 {gateOptions.length > 0 && (
                   <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
@@ -341,7 +341,7 @@ const NorskForm: React.FC = () => {
                 onValueChange={handleHusnummerSelect}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Velg husnummer..." />
+                  <SelectValue placeholder="Velg husnummer" />
                 </SelectTrigger>
                 <SelectContent>
                   {husnummerOptions.map((num) => (
@@ -368,6 +368,7 @@ const NorskForm: React.FC = () => {
                 onChange={handleChange}
                 className="w-full bg-gray-50"
                 readOnly={!!formData.husnummer}
+                placeholder={!formData.husnummer ? "Skriv inn postnummer" : ""}
               />
               {errors.postnummer && <p className="text-norsk-red text-sm mt-1">{errors.postnummer}</p>}
             </div>
@@ -383,6 +384,7 @@ const NorskForm: React.FC = () => {
                 onChange={handleChange}
                 className="w-full bg-gray-50"
                 readOnly={!!formData.husnummer}
+                placeholder={!formData.husnummer ? "Skriv inn poststed" : ""}
               />
               {errors.poststed && <p className="text-norsk-red text-sm mt-1">{errors.poststed}</p>}
             </div>

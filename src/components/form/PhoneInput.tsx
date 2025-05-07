@@ -32,7 +32,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
         value={value}
         onChange={handlePhoneInput}
         className={hasError ? 'ring-2 ring-destructive' : ''}
-        placeholder="123 45 678"
+        placeholder="Skriv inn telefonnummer"
       />
       {hasError && errorMessage && (
         <p className="text-sm font-medium text-destructive">{errorMessage}</p>
