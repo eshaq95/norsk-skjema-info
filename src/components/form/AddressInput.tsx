@@ -33,6 +33,15 @@ const AddressInput: React.FC<AddressInputProps> = ({
     onPlaceSelected: handlePlaceSelected 
   });
 
+  // Ensure focus state is properly managed
+  const handleFocus = () => {
+    setAddressFocused(true);
+  };
+
+  const handleBlur = () => {
+    setAddressFocused(false);
+  };
+
   return (
     <div className="space-y-2 mb-4">
       <Label htmlFor="adresse" className="font-medium">Adresse</Label>
@@ -42,8 +51,8 @@ const AddressInput: React.FC<AddressInputProps> = ({
         value={value}
         onChange={handleAddressChange}
         ref={addressInputRef}
-        onFocus={() => setAddressFocused(true)}
-        onBlur={() => setAddressFocused(false)}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
         className={`${hasError ? 'ring-2 ring-destructive' : ''} ${addressFocused ? 'ring-2 ring-primary/30' : ''}`}
         placeholder="Gatenavn 123, Postnummer Oslo"
       />
