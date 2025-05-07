@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import FormInput from './form/FormInput';
@@ -283,7 +282,7 @@ const NorskForm: React.FC = () => {
                 placeholder="Skriv inn kommune"
               />
               {kommuneOptions.length > 0 && (
-                <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                <ul className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
                   {kommuneOptions.map((kommune) => (
                     <li
                       key={kommune.id}
@@ -299,7 +298,7 @@ const NorskForm: React.FC = () => {
             </div>
           </div>
           
-          {/* Gate and Husnummer side by side */}
+          {/* Gate and Husnummer side by side - only show when kommune is selected */}
           {formData.kommuneId && (
             <div className="grid grid-cols-2 gap-4 mb-4">
               {/* Gate autocomplete */}
@@ -316,7 +315,7 @@ const NorskForm: React.FC = () => {
                     placeholder="Skriv inn gatenavn"
                   />
                   {gateOptions.length > 0 && (
-                    <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                    <ul className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
                       {gateOptions.map((gate) => (
                         <li
                           key={gate.id}
@@ -332,7 +331,7 @@ const NorskForm: React.FC = () => {
                 </div>
               </div>
 
-              {/* Husnummer dropdown - only visible when gate is selected */}
+              {/* Husnummer dropdown */}
               <div>
                 <label htmlFor="husnummer" className="block text-sm font-medium text-norsk-dark mb-1">
                   Husnummer
@@ -342,10 +341,10 @@ const NorskForm: React.FC = () => {
                   value={formData.husnummer}
                   onValueChange={handleHusnummerSelect}
                 >
-                  <SelectTrigger className={`${!formData.gateId ? 'bg-gray-100' : 'bg-white'}`}>
+                  <SelectTrigger className="bg-gray-100 w-full">
                     <SelectValue placeholder="Velg husnummer" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white">
                     {husnummerOptions.map((num) => (
                       <SelectItem key={num.label} value={num.label}>
                         {num.label}
