@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import FormInput from './form/FormInput';
@@ -23,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { ChevronDown } from "lucide-react";
 
 interface FormData {
   fornavn: string;
@@ -298,68 +298,70 @@ const NorskForm: React.FC = () => {
             </div>
           </div>
           
-          {/* Gate autocomplete - only visible when kommune is selected */}
+          {/* Gate and Husnummer side by side */}
           {formData.kommuneId && (
-            <div className="mb-4">
-              <label htmlFor="gate" className="block text-sm font-medium text-norsk-dark mb-1">
-                Gate
-              </label>
-              <div className="relative">
-                <Input
-                  id="gate"
-                  value={gateQuery}
-                  onChange={(e) => setGateQuery(e.target.value)}
-                  className="w-full"
-                  placeholder="Skriv inn gatenavn"
-                />
-                {gateOptions.length > 0 && (
-                  <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
-                    {gateOptions.map((gate) => (
-                      <li
-                        key={gate.id}
-                        onClick={() => handleGateSelect(gate)}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                      >
-                        {gate.name}
-                      </li>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              {/* Gate autocomplete */}
+              <div>
+                <label htmlFor="gate" className="block text-sm font-medium text-norsk-dark mb-1">
+                  Gate - eller stedsadresse
+                </label>
+                <div className="relative">
+                  <Input
+                    id="gate"
+                    value={gateQuery}
+                    onChange={(e) => setGateQuery(e.target.value)}
+                    className="w-full"
+                    placeholder="Skriv inn gatenavn"
+                  />
+                  {gateOptions.length > 0 && (
+                    <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {gateOptions.map((gate) => (
+                        <li
+                          key={gate.id}
+                          onClick={() => handleGateSelect(gate)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {gate.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {errors.gate && <p className="text-norsk-red text-sm mt-1">{errors.gate}</p>}
+                </div>
+              </div>
+
+              {/* Husnummer dropdown - only visible when gate is selected */}
+              <div>
+                <label htmlFor="husnummer" className="block text-sm font-medium text-norsk-dark mb-1">
+                  Husnummer
+                </label>
+                <Select
+                  disabled={!formData.gateId || husnummerOptions.length === 0}
+                  value={formData.husnummer}
+                  onValueChange={handleHusnummerSelect}
+                >
+                  <SelectTrigger className={`bg-${!formData.gateId ? 'gray-100' : 'white'}`}>
+                    <SelectValue placeholder="Velg husnummer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {husnummerOptions.map((num) => (
+                      <SelectItem key={num.label} value={num.label}>
+                        {num.label}
+                      </SelectItem>
                     ))}
-                  </ul>
-                )}
-                {errors.gate && <p className="text-norsk-red text-sm mt-1">{errors.gate}</p>}
+                  </SelectContent>
+                </Select>
+                {errors.husnummer && <p className="text-norsk-red text-sm mt-1">{errors.husnummer}</p>}
               </div>
             </div>
           )}
           
-          {/* Husnummer dropdown - only visible when gate is selected */}
-          {formData.gateId && husnummerOptions.length > 0 && (
-            <div className="mb-4">
-              <label htmlFor="husnummer" className="block text-sm font-medium text-norsk-dark mb-1">
-                Husnummer
-              </label>
-              <Select 
-                value={formData.husnummer} 
-                onValueChange={handleHusnummerSelect}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Velg husnummer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {husnummerOptions.map((num) => (
-                    <SelectItem key={num.label} value={num.label}>
-                      {num.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.husnummer && <p className="text-norsk-red text-sm mt-1">{errors.husnummer}</p>}
-            </div>
-          )}
-          
-          {/* Postnummer and Poststed side by side - readonly when filled by address lookup */}
+          {/* Postnummer and Poststed side by side - readonly */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label htmlFor="postnummer" className="block text-sm font-medium text-norsk-dark mb-1">
-                Postnummer
+                PostNr.
               </label>
               <Input
                 id="postnummer"
@@ -367,8 +369,8 @@ const NorskForm: React.FC = () => {
                 value={formData.postnummer}
                 onChange={handleChange}
                 className="w-full bg-gray-50"
-                readOnly={!!formData.husnummer}
-                placeholder={!formData.husnummer ? "Skriv inn postnummer" : ""}
+                readOnly={true}
+                placeholder=""
               />
               {errors.postnummer && <p className="text-norsk-red text-sm mt-1">{errors.postnummer}</p>}
             </div>
@@ -383,8 +385,8 @@ const NorskForm: React.FC = () => {
                 value={formData.poststed}
                 onChange={handleChange}
                 className="w-full bg-gray-50"
-                readOnly={!!formData.husnummer}
-                placeholder={!formData.husnummer ? "Skriv inn poststed" : ""}
+                readOnly={true}
+                placeholder=""
               />
               {errors.poststed && <p className="text-norsk-red text-sm mt-1">{errors.poststed}</p>}
             </div>
