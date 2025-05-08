@@ -110,24 +110,12 @@ export const useMunicipalities = () => {
         }
       }
       
-      // Implementation of the "prioriter + fallback" search strategy:
-      // First get municipalities that start with the query, then include those that contain it
+      // Simple "startsWith" filtering approach - only return municipalities that start with the query
       const canonicalQuery = canon(query);
       
-      // First get municipalities that START with the query
-      const startsWith = municipalitiesCache.filter(kommune => 
+      const filtered = municipalitiesCache.filter(kommune => 
         kommune.name && canon(kommune.name).startsWith(canonicalQuery)
-      );
-      
-      // Then get municipalities that INCLUDE the query but don't start with it
-      const includes = municipalitiesCache.filter(kommune => 
-        kommune.name && 
-        !canon(kommune.name).startsWith(canonicalQuery) && // not already in startsWith list
-        canon(kommune.name).includes(canonicalQuery)
-      );
-      
-      // Combine both lists, with startsWith results first, and limit to 20 results
-      const filtered = [...startsWith, ...includes].slice(0, 20);
+      ).slice(0, 20); // Limit to 20 results
       
       return filtered;
     } catch (error) {
