@@ -5,6 +5,13 @@ import { fetchStreets, Street } from '@/hooks/useAddressLookup';
 import { Loader2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
+// Helper function to normalize strings for comparison (handles Norwegian characters)
+const canon = (s: string): string => 
+  s.normalize("NFD")                // decompose diacritical marks
+   .replace(/[\u0300-\u036f]/g, "") // remove diacritics
+   .toLowerCase()                   // lowercase
+   .trim();                         // remove extra spaces
+
 interface StreetInputProps {
   municipalityId: string;
   onStreetSelect: (street: Street) => void;
@@ -44,8 +51,15 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
     const fetchStreetOptions = async () => {
       setLoading(true);
       try {
-        const options = await fetchStreets(municipalityId, inputValue);
-        setOptions(options);
+        const allStreets = await fetchStreets(municipalityId, inputValue);
+        
+        // Filter results to only include streets that START WITH the search term
+        const canonicalQuery = canon(inputValue);
+        const filtered = allStreets.filter(street => 
+          canon(street.name).startsWith(canonicalQuery)
+        );
+        
+        setOptions(filtered);
         setApiError(false);
       } catch (error) {
         console.error('Error fetching streets:', error);
