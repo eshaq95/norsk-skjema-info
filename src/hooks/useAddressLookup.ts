@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 
 // Updated API endpoints that support CORS
@@ -177,11 +176,13 @@ export const fetchStreets = async (
     });
   }
 
-  const streets = [...uniq.values()].sort((a, b) =>
-    a.name.localeCompare(b.name, "no")
-  );
+  // Filter to only include streets that START with the query
+  const canonicalQuery = canon(cleanQuery);
+  const streets = [...uniq.values()]
+    .filter(street => canon(street.name).startsWith(canonicalQuery))
+    .sort((a, b) => a.name.localeCompare(b.name, "no"));
   
-  console.log(`Found ${streets.length} matching streets`);
+  console.log(`Found ${streets.length} matching streets that start with "${cleanQuery}"`);
   return streets;
 };
 
