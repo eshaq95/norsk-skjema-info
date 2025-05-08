@@ -134,15 +134,6 @@ const NorskForm: React.FC = () => {
             onAddressChange={handleFieldChange}
           />
           
-          <div className="bg-norsk-gray/30 p-4 rounded-lg mb-6">
-            <h3 className="font-medium text-norsk-dark mb-2">GeoNorge API-sikkerhet</h3>
-            <p className="text-sm text-gray-700 mb-2">
-              Alle tre endepunkt (kommune, gate, husnr.) er åpne og CORS-vennlige på ws.geonorge.no. 
-              Dokumentasjonen anbefaler <code className="bg-gray-100 px-1 rounded">Accept: application/json</code>, 
-              og du kan filtrere treff med <code className="bg-gray-100 px-1 rounded">fuzzy=true</code> for bedre hit-rate.
-            </p>
-          </div>
-          
           <SubmitButton isSubmitting={isSubmitting} />
           
           <PrivacyNotice />

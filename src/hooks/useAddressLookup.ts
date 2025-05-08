@@ -39,7 +39,11 @@ export const useMunicipalities = () => {
       // Fetch all municipalities once and cache them
       if (!municipalitiesCache) {
         console.log('Fetching all municipalities from Geonorge');
-        const res = await fetch(`${GEO_BASE}/kommuneinfo/v1/kommuner`);
+        const res = await fetch(`${GEO_BASE}/kommuneinfo/v1/kommuner`, {
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
         
         if (!res.ok) {
           console.error(`HTTP error! status: ${res.status}`);
@@ -97,7 +101,11 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
                 `&fuzzy=true&treffPerSide=20`;
     console.log('Fetching streets from URL:', url);
     
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
     
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
@@ -140,10 +148,15 @@ export const fetchHouseNumbers = async (municipalityId: string, streetName: stri
     const streetUrl = `${GEO_BASE}/adresser/v1/sok` +
                       `?sok=${encodeURIComponent(streetName)}` +
                       `&kommunenummer=${encodeURIComponent(municipalityId)}` +
+                      `&fuzzy=true` + 
                       `&treffPerSide=1`;  // We just need one result to get the vegadresseId
     
     console.log('Fetching street ID from URL:', streetUrl);
-    const streetRes = await fetch(streetUrl);
+    const streetRes = await fetch(streetUrl, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
     
     if (!streetRes.ok) {
       throw new Error(`HTTP error! status: ${streetRes.status}`);
@@ -161,7 +174,11 @@ export const fetchHouseNumbers = async (municipalityId: string, streetName: stri
                             `?vegadresseId=${encodeURIComponent(vegadresseId)}`;
       
       console.log('Fetching house numbers from URL:', houseNumberUrl);
-      const houseNumberRes = await fetch(houseNumberUrl);
+      const houseNumberRes = await fetch(houseNumberUrl, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
       
       if (!houseNumberRes.ok) {
         throw new Error(`HTTP error! status: ${houseNumberRes.status}`);
@@ -208,9 +225,14 @@ export const fetchHouseNumbers = async (municipalityId: string, streetName: stri
     const url = `${GEO_BASE}/adresser/v1/sok` +
                 `?sok=${encodeURIComponent(streetName)}` +
                 `&kommunenummer=${encodeURIComponent(municipalityId)}` +
+                `&fuzzy=true` +
                 `&treffPerSide=100`;
     
-    const res = await fetch(url);
+    const res = await fetch(url, {
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
     
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${res.status}`);
