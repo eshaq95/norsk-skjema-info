@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 
 // Updated API endpoints that support CORS
@@ -111,12 +110,24 @@ export const useMunicipalities = () => {
         }
       }
       
-      // Filter municipalities with canonical string comparison
+      // Implementation of the "prioriter + fallback" search strategy:
+      // First get municipalities that start with the query, then include those that contain it
       const canonicalQuery = canon(query);
       
-      const filtered = municipalitiesCache.filter(kommune => 
-        kommune.name && canon(kommune.name).includes(canonicalQuery)
-      ).slice(0, 20); // Limit to 20 results
+      // First get municipalities that START with the query
+      const startsWith = municipalitiesCache.filter(kommune => 
+        kommune.name && canon(kommune.name).startsWith(canonicalQuery)
+      );
+      
+      // Then get municipalities that INCLUDE the query but don't start with it
+      const includes = municipalitiesCache.filter(kommune => 
+        kommune.name && 
+        !canon(kommune.name).startsWith(canonicalQuery) && // not already in startsWith list
+        canon(kommune.name).includes(canonicalQuery)
+      );
+      
+      // Combine both lists, with startsWith results first, and limit to 20 results
+      const filtered = [...startsWith, ...includes].slice(0, 20);
       
       return filtered;
     } catch (error) {
