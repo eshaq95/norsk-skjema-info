@@ -139,21 +139,15 @@ export const fetchStreets = async (
   municipalityId: string,
   query: string
 ): Promise<Street[]> => {
-  /* 1. Don't call API until user has typed at least 2 characters */
-  if (query.length < 2) return [];
+  if (query.length < 2) return [];                  // wait until ≥2 chars
 
-  /* 2. Use prefix search for 2-3 characters -> te*  (fuzzy = false)
-        Use fuzzy search for ≥4 characters   -> terrasse  (fuzzy = true) */
-  const withWildcard = query.length < 4;
-  const sokParam = withWildcard
-    ? encodeURIComponent(query + "*")       // te*  ->  te%2A
-    : encodeURIComponent(query);            // terrasse
+  // add * BEFORE URL encoding -> terr%2A
+  const sokParam = encodeURIComponent(query + "*");
 
   const url =
     `${GEO_BASE}/adresser/v1/sok?sok=${sokParam}` +
     `&kommunenummer=${municipalityId}` +
-    `&treffPerSide=20` +
-    (withWildcard ? "" : "&fuzzy=true");
+    `&treffPerSide=20`;                             // no fuzzy=true
     
   console.log('Fetching streets from URL:', url);
   
@@ -170,7 +164,6 @@ export const fetchStreets = async (
     return [];
   }
 
-  /* 3. Collect unique street names and sort alphabetically */
   const uniq = new Map<string, Street>();
   for (const a of data.adresser) {
     if (!a.adressenavn) continue;
@@ -252,7 +245,7 @@ export const fetchHouseNumbers = async (municipalityId: string, streetName: stri
         const sortedNumbers = numbers.sort((a: HouseNumber, b: HouseNumber) => {
           // Try to sort numerically if possible
           const aNum = parseInt(a.label.replace(/[^0-9]/g, ''));
-          const bNum = parseInt(b.label.replace(/[^0-9]/g, ''));
+          const bNum = parseInt(b.label.replace(/[^0-9]/g, '));
           
           if (!isNaN(aNum) && !isNaN(bNum)) {
             if (aNum !== bNum) return aNum - bNum;
@@ -309,7 +302,7 @@ export const fetchHouseNumbers = async (municipalityId: string, streetName: stri
       .sort((a: HouseNumber, b: HouseNumber) => {
         // Try to sort numerically if possible
         const aNum = parseInt(a.label.replace(/[^0-9]/g, ''));
-        const bNum = parseInt(b.label.replace(/[^0-9]/g, ''));
+        const bNum = parseInt(b.label.replace(/[^0-9]/g, '));
         
         if (!isNaN(aNum) && !isNaN(bNum)) {
           if (aNum !== bNum) return aNum - bNum;
