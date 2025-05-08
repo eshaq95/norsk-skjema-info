@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 // Updated API endpoints that support CORS
@@ -245,7 +246,7 @@ export const fetchHouseNumbers = async (municipalityId: string, streetName: stri
         const sortedNumbers = numbers.sort((a: HouseNumber, b: HouseNumber) => {
           // Try to sort numerically if possible
           const aNum = parseInt(a.label.replace(/[^0-9]/g, ''));
-          const bNum = parseInt(b.label.replace(/[^0-9]/g, '));
+          const bNum = parseInt(b.label.replace(/[^0-9]/g, ''));
           
           if (!isNaN(aNum) && !isNaN(bNum)) {
             if (aNum !== bNum) return aNum - bNum;
@@ -302,7 +303,7 @@ export const fetchHouseNumbers = async (municipalityId: string, streetName: stri
       .sort((a: HouseNumber, b: HouseNumber) => {
         // Try to sort numerically if possible
         const aNum = parseInt(a.label.replace(/[^0-9]/g, ''));
-        const bNum = parseInt(b.label.replace(/[^0-9]/g, '));
+        const bNum = parseInt(b.label.replace(/[^0-9]/g, ''));
         
         if (!isNaN(aNum) && !isNaN(bNum)) {
           if (aNum !== bNum) return aNum - bNum;
