@@ -35,7 +35,7 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
   
   // Fetch streets when input changes with debounce
   useEffect(() => {
-    // Only fetch if dropdown is open, municipality is selected, and input has at least 2 chars
+    // Only fetch if municipality is selected, and input has at least 2 chars
     if (!municipalityId || inputValue.trim().length < 2) {
       setOptions([]);
       return;

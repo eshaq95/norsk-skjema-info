@@ -141,14 +141,23 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
   if (!query || query.length < 2) return [];
   
   try {
-    // Normalize the query and explicitly add wildcard if not already present
-    const canonQ = canon(query);
-    const wildcard = canonQ.endsWith("*") ? canonQ : `${canonQ}*`;
+    /*  Jokertegn fungerer ikke sammen med fuzzy=true.
+        Regelen vi bruker er:
+          – 2-3 tegn  → prefix-søk  (jokertegn, fuzzy=false)
+          – ≥ 4 tegn → fuzzy-søk   (mer tolerant)                */
+
+    const useWildcard = query.length < 4;
+    const sokParam = useWildcard
+        ? encodeURIComponent(query + "*")      // terr%2A - proper encoding of "*"
+        : encodeURIComponent(query);           // terrasse
+            
+    console.log('sokParam:', sokParam);
     
     const url = `${GEO_BASE}/adresser/v1/sok` + 
-                `?sok=${encodeURIComponent(wildcard)}` + 
+                `?sok=${sokParam}` + 
                 `&kommunenummer=${encodeURIComponent(municipalityId)}` + 
-                `&fuzzy=true&treffPerSide=20`;
+                `&treffPerSide=20` +
+                (useWildcard ? "" : "&fuzzy=true");      // only add fuzzy when not using *
                 
     console.log('Fetching streets from URL:', url);
     
