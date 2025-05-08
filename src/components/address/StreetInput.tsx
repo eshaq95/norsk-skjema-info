@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { fetchStreets, Street } from '@/hooks/useAddressLookup';
 import { Loader2 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 interface StreetInputProps {
   municipalityId: string;
@@ -21,12 +22,15 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
   const [apiError, setApiError] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const { toast } = useToast();
+  const errorCountRef = useRef(0);
   
   // Reset input when municipality changes
   useEffect(() => {
     setInputValue('');
     setSelected(null);
     setOptions([]);
+    errorCountRef.current = 0;
   }, [municipalityId]);
   
   // Fetch streets when input changes with debounce
@@ -47,10 +51,16 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
         const streets = await fetchStreets(municipalityId, inputValue);
         setOptions(streets);
         setApiError(false);
+        errorCountRef.current = 0; // Reset error count on success
       } catch (error) {
         console.error('Error fetching streets:', error);
         setOptions([]);
-        setApiError(true);
+        errorCountRef.current += 1;
+        
+        // Only show error dialog if we've had multiple consecutive failures
+        if (errorCountRef.current > 2) {
+          setApiError(true);
+        }
       } finally {
         setLoading(false);
       }
@@ -127,6 +137,11 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
 
   const handleCloseError = () => {
     setApiError(false);
+    // Provide feedback to user about manual entry option
+    toast({
+      title: "Manuell adresse",
+      description: "Du kan skrive inn adressen manuelt eller prøve søket igjen senere.",
+    });
   };
 
   return (
@@ -141,10 +156,11 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
           onChange={handleInputChange}
           className="w-full"
           disabled={disabled}
-          placeholder={disabled ? "Velg kommune først" : "Skriv inn gatenavn"}
+          placeholder={disabled ? "Velg kommune først" : "Skriv inn gatenavn (minst 2 bokstaver)"}
           onClick={handleInputClick}
           onFocus={() => inputValue.length >= 2 && !disabled && setIsOpen(true)}
           onBlur={handleBlur}
+          autoComplete="off"
         />
         
         {loading && (
@@ -181,7 +197,7 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
           <AlertDialogHeader>
             <AlertDialogTitle>Tilkoblingsproblem</AlertDialogTitle>
             <AlertDialogDescription>
-              Vi kunne ikke hente gateadresser akkurat nå. Dette kan skyldes nettverksproblemer eller at tjenesten er midlertidig utilgjengelig. Vennligst prøv igjen senere.
+              Vi kunne ikke hente gateadresser akkurat nå. Dette kan skyldes nettverksproblemer eller at tjenesten er midlertidig utilgjengelig. Du kan skrive inn adressen manuelt eller prøve igjen senere.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
