@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 
 // Updated API endpoints that support CORS
@@ -141,23 +140,14 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
   if (!query || query.length < 2) return [];
   
   try {
-    /*  Jokertegn fungerer ikke sammen med fuzzy=true.
-        Regelen vi bruker er:
-          – 2-3 tegn  → prefix-søk  (jokertegn, fuzzy=false)
-          – ≥ 4 tegn → fuzzy-søk   (mer tolerant)                */
-
-    const useWildcard = query.length < 4;
-    const sokParam = useWildcard
-        ? encodeURIComponent(query + "*")      // terr%2A - proper encoding of "*"
-        : encodeURIComponent(query);           // terrasse
-            
+    // Always use wildcard for prefix search, similar to municipality search logic
+    const sokParam = encodeURIComponent(query + "*");
     console.log('sokParam:', sokParam);
     
     const url = `${GEO_BASE}/adresser/v1/sok` + 
                 `?sok=${sokParam}` + 
                 `&kommunenummer=${encodeURIComponent(municipalityId)}` + 
-                `&treffPerSide=20` +
-                (useWildcard ? "" : "&fuzzy=true");      // only add fuzzy when not using *
+                `&treffPerSide=20`;
                 
     console.log('Fetching streets from URL:', url);
     
@@ -185,10 +175,14 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
       if (adr.adressenavn) {
         // Use the adressenavn as both id and name if no vegadresseId is available
         const id = adr.vegadresseId || adr.adressenavn;
-        uniqueStreets.set(adr.adressenavn, {
-          id: id,
-          name: adr.adressenavn,
-        });
+        
+        // Only include streets that START WITH the query (case-insensitive)
+        if (canon(adr.adressenavn).startsWith(canon(query))) {
+          uniqueStreets.set(adr.adressenavn, {
+            id: id,
+            name: adr.adressenavn,
+          });
+        }
       }
     });
     
