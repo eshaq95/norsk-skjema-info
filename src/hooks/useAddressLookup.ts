@@ -142,8 +142,11 @@ export const fetchStreets = async (
 ): Promise<Street[]> => {
   if (query.length < 2) return [];                  // wait until ≥2 chars
 
-  // add * BEFORE URL encoding -> terr%2A
-  const sokParam = encodeURIComponent(query + "*");
+  // First clean up the query by removing extra spaces
+  const cleanQuery = query.replace(/\s+/g, " ").trim();
+  
+  // Handle the wildcard separately after encoding to ensure proper URL handling
+  const sokParam = encodeURIComponent(cleanQuery) + "%2A";  // Manually append encoded * (%2A)
 
   const url =
     `${GEO_BASE}/adresser/v1/sok?sok=${sokParam}` +
