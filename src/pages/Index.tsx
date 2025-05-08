@@ -9,11 +9,6 @@ const Index: React.FC = () => {
     <div className="min-h-screen bg-norsk-gray py-12 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
-          <img 
-            src="/placeholder.svg" 
-            alt="Nordics Choice AS" 
-            className="h-16 mx-auto mb-4"
-          />
           <h1 className="text-3xl font-bold text-norsk-blue mb-2">NordicMelatonin™ Bestilling</h1>
           <p className="text-norsk-dark max-w-xl mx-auto">
             Fyll ut skjemaet under for å bestille vårt norskutviklede søvnprodukt. Vi sender direkte til din adresse.
