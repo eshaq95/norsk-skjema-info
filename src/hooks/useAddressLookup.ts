@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 // Updated API endpoints that support CORS
@@ -140,10 +141,15 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
   if (query.length < 2) return [];
   
   try {
+    // Normalize the query and add wildcard if not already present
+    const canonQ = canon(query);
+    const wildcard = canonQ.endsWith("*") ? canonQ : `${canonQ}*`;
+    
     const url = `${GEO_BASE}/adresser/v1/sok` + 
-                `?sok=${encodeURIComponent(query)}` + 
+                `?sok=${encodeURIComponent(wildcard)}` + 
                 `&kommunenummer=${encodeURIComponent(municipalityId)}` + 
                 `&fuzzy=true&treffPerSide=20`;
+                
     console.log('Fetching streets from URL:', url);
     
     const res = await fetch(url, {
@@ -167,7 +173,7 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
     const uniqueStreets = new Map<string, Street>();
     
     data.adresser.forEach((adr: any) => {
-      if (adr.adressenavn && adr.adressenavn.toLowerCase().includes(query.toLowerCase())) {
+      if (adr.adressenavn) {
         // Use the adressenavn as both id and name if no vegadresseId is available
         const id = adr.vegadresseId || adr.adressenavn;
         uniqueStreets.set(adr.adressenavn, {
