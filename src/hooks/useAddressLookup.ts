@@ -138,7 +138,7 @@ if (typeof window !== 'undefined') {
 
 export const fetchStreets = async (municipalityId: string, query: string): Promise<Street[]> => {
   console.log('fetchStreets called with municipalityId:', municipalityId, 'query:', query);
-  if (query.length < 2) return [];
+  if (!query || query.length < 2) return [];
   
   try {
     // Normalize the query and explicitly add wildcard if not already present
@@ -169,7 +169,7 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
       return [];
     }
     
-    // Create a Set to avoid duplicate streets
+    // Create a Map to avoid duplicate streets
     const uniqueStreets = new Map<string, Street>();
     
     data.adresser.forEach((adr: any) => {

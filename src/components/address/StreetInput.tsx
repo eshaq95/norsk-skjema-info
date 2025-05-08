@@ -35,7 +35,8 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
   
   // Fetch streets when input changes with debounce
   useEffect(() => {
-    if (!isOpen || !municipalityId || inputValue.trim().length < 2) {
+    // Only fetch if dropdown is open, municipality is selected, and input has at least 2 chars
+    if (!municipalityId || inputValue.trim().length < 2) {
       setOptions([]);
       return;
     }
@@ -49,6 +50,7 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
       setLoading(true);
       try {
         const streets = await fetchStreets(municipalityId, inputValue);
+        console.log('Streets fetched:', streets);
         setOptions(streets);
         setApiError(false);
         errorCountRef.current = 0; // Reset error count on success
@@ -75,7 +77,7 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [municipalityId, inputValue, isOpen]);
+  }, [municipalityId, inputValue]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
