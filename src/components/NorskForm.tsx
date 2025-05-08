@@ -135,27 +135,12 @@ const NorskForm: React.FC = () => {
           />
           
           <div className="bg-norsk-gray/30 p-4 rounded-lg mb-6">
-            <h3 className="font-medium text-norsk-dark mb-2">Din trygghet er viktig for oss</h3>
-            <ul className="text-sm space-y-1">
-              <li className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-norsk-blue" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
-                </svg>
-                <span>Norskutviklet høykvalitetsprodukt</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-norsk-blue" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
-                </svg>
-                <span>Ingen bindingstid på abonnement</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-norsk-blue" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path>
-                </svg>
-                <span>Ingen forskuddsbetaling</span>
-              </li>
-            </ul>
+            <h3 className="font-medium text-norsk-dark mb-2">GeoNorge API-sikkerhet</h3>
+            <p className="text-sm text-gray-700 mb-2">
+              Alle tre endepunkt (kommune, gate, husnr.) er åpne og CORS-vennlige på ws.geonorge.no. 
+              Dokumentasjonen anbefaler <code className="bg-gray-100 px-1 rounded">Accept: application/json</code>, 
+              og du kan filtrere treff med <code className="bg-gray-100 px-1 rounded">fuzzy=true</code> for bedre hit-rate.
+            </p>
           </div>
           
           <SubmitButton isSubmitting={isSubmitting} />
