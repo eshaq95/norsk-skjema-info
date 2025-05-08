@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { fetchStreets, Street } from '@/hooks/useAddressLookup';
 import { Loader2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface StreetInputProps {
   municipalityId: string;
@@ -17,7 +18,9 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
   const [options, setOptions] = useState<Street[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Reset input when municipality changes
   useEffect(() => {
@@ -26,24 +29,42 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
     setOptions([]);
   }, [municipalityId]);
   
-  // Fetch streets when input changes (not when selection changes)
+  // Fetch streets when input changes with debounce
   useEffect(() => {
     if (!isOpen || !municipalityId || inputValue.trim().length < 2) {
       setOptions([]);
       return;
     }
     
+    // Clear any existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
     const fetchStreetOptions = async () => {
       setLoading(true);
-      console.log('Fetching streets for municipality:', municipalityId, 'query:', inputValue);
-      const options = await fetchStreets(municipalityId, inputValue);
-      console.log('Street options received:', options);
-      setOptions(options);
-      setLoading(false);
+      try {
+        const options = await fetchStreets(municipalityId, inputValue);
+        setOptions(options);
+        setApiError(false);
+      } catch (error) {
+        console.error('Error fetching streets:', error);
+        setOptions([]);
+        setApiError(true);
+      } finally {
+        setLoading(false);
+      }
     };
     
-    const timeoutId = setTimeout(fetchStreetOptions, 300);
-    return () => clearTimeout(timeoutId);
+    // Set a new debounce timer (500ms)
+    debounceTimerRef.current = setTimeout(fetchStreetOptions, 500);
+    
+    // Cleanup timer on component unmount
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, [municipalityId, inputValue, isOpen]);
 
   // Close dropdown when clicking outside
@@ -61,7 +82,6 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
   }, []);
 
   const handleSelect = (street: Street) => {
-    console.log('Selected street:', street);
     setSelected(street);
     setInputValue(street.name);
     onStreetSelect(street);
@@ -105,6 +125,10 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
     }, 150);
   };
 
+  const handleCloseError = () => {
+    setApiError(false);
+  };
+
   return (
     <div ref={dropdownRef}>
       <label htmlFor="gate" className="block text-sm font-medium text-norsk-dark mb-1">
@@ -143,7 +167,7 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
           </ul>
         )}
         
-        {inputValue.length >= 2 && !loading && isOpen && options.length === 0 && (
+        {inputValue.length >= 2 && !loading && isOpen && options.length === 0 && !apiError && (
           <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg p-2 mt-1">
             <p className="text-sm text-gray-500">Ingen treff</p>
           </div>
@@ -151,6 +175,20 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
         
         {error && <p className="text-norsk-red text-sm mt-1">{error}</p>}
       </div>
+
+      <AlertDialog open={apiError} onOpenChange={setApiError}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tilkoblingsproblem</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vi kunne ikke hente gateadresser akkurat nå. Dette kan skyldes nettverksproblemer eller at tjenesten er midlertidig utilgjengelig. Vennligst prøv igjen senere.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleCloseError}>Ok, jeg forstår</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

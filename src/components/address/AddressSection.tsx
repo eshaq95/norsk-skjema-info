@@ -5,6 +5,7 @@ import StreetInput from './StreetInput';
 import HouseNumberInput from './HouseNumberInput';
 import PostalDisplay from './PostalDisplay';
 import { Municipality, Street, HouseNumber, fetchHouseNumbers } from '@/hooks/useAddressLookup';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface AddressSectionProps {
   formData: {
@@ -33,17 +34,26 @@ const AddressSection: React.FC<AddressSectionProps> = ({
 }) => {
   const [husnummerOptions, setHusnummerOptions] = useState<HouseNumber[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<boolean>(false);
 
   // Fetch house numbers when street is selected
   useEffect(() => {
     const loadHouseNumbers = async () => {
       if (formData.kommuneId && formData.gate) {
         setIsLoading(true);
-        console.log('Fetching house numbers for street:', formData.gate);
-        const options = await fetchHouseNumbers(formData.kommuneId, formData.gate);
-        console.log('House number options received:', options);
-        setHusnummerOptions(options);
-        setIsLoading(false);
+        try {
+          console.log('Fetching house numbers for street:', formData.gate);
+          const options = await fetchHouseNumbers(formData.kommuneId, formData.gate);
+          console.log('House number options received:', options);
+          setHusnummerOptions(options);
+          setApiError(false);
+        } catch (error) {
+          console.error('Error fetching house numbers:', error);
+          setHusnummerOptions([]);
+          setApiError(true);
+        } finally {
+          setIsLoading(false);
+        }
       } else {
         setHusnummerOptions([]);
       }
@@ -84,6 +94,10 @@ const AddressSection: React.FC<AddressSectionProps> = ({
     }
   };
 
+  const handleCloseError = () => {
+    setApiError(false);
+  };
+
   return (
     <>
       <MunicipalityInput 
@@ -118,6 +132,20 @@ const AddressSection: React.FC<AddressSectionProps> = ({
           errorPoststed={errors.poststed}
         />
       </div>
+
+      <AlertDialog open={apiError} onOpenChange={setApiError}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tilkoblingsproblem</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vi kunne ikke hente husnummer akkurat nå. Dette kan skyldes nettverksproblemer eller at tjenesten er midlertidig utilgjengelig. Vennligst prøv igjen senere.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleCloseError}>Ok, jeg forstår</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

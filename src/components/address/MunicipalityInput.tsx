@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { Municipality, useMunicipalities } from '@/hooks/useAddressLookup';
 import { Loader2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface MunicipalityInputProps {
   onMunicipalitySelect: (municipality: Municipality) => void;
@@ -15,28 +16,48 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
   const [options, setOptions] = useState<Municipality[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const getMunicipalities = useMunicipalities();
   
-  // Fetch municipalities when input changes (not when selection changes)
+  // Fetch municipalities when input changes with debounce
   useEffect(() => {
     if (!isOpen || inputValue.trim().length < 2) {
       setOptions([]);
       return;
     }
     
+    // Clear any existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
     const fetchMunicipalities = async () => {
       setLoading(true);
-      console.log('Fetching municipalities for query:', inputValue);
-      const options = await getMunicipalities(inputValue);
-      console.log('Municipality options received:', options);
-      setOptions(options);
-      setLoading(false);
+      try {
+        const options = await getMunicipalities(inputValue);
+        setOptions(options);
+        setApiError(false);
+      } catch (error) {
+        console.error('Error fetching municipalities:', error);
+        setOptions([]);
+        setApiError(true);
+      } finally {
+        setLoading(false);
+      }
     };
     
-    const timeoutId = setTimeout(fetchMunicipalities, 300);
-    return () => clearTimeout(timeoutId);
+    // Set a new debounce timer (500ms)
+    debounceTimerRef.current = setTimeout(fetchMunicipalities, 500);
+    
+    // Cleanup timer on component unmount
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, [inputValue, isOpen, getMunicipalities]);
 
   // Close dropdown when clicking outside
@@ -54,7 +75,6 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
   }, []);
 
   const handleSelect = (municipality: Municipality) => {
-    console.log('Selected municipality:', municipality);
     setSelected(municipality);
     setInputValue(municipality.name);
     onMunicipalitySelect(municipality);
@@ -98,6 +118,10 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
     }, 150);
   };
 
+  const handleCloseError = () => {
+    setApiError(false);
+  };
+
   return (
     <div className="mb-4" ref={dropdownRef}>
       <label htmlFor="kommune" className="block text-sm font-medium text-norsk-dark mb-1">
@@ -135,7 +159,7 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
           </ul>
         )}
         
-        {inputValue.length >= 2 && !loading && isOpen && options.length === 0 && (
+        {inputValue.length >= 2 && !loading && isOpen && options.length === 0 && !apiError && (
           <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg p-2 mt-1">
             <p className="text-sm text-gray-500">Ingen treff</p>
           </div>
@@ -143,6 +167,20 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
         
         {error && <p className="text-norsk-red text-sm mt-1">{error}</p>}
       </div>
+
+      <AlertDialog open={apiError} onOpenChange={setApiError}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tilkoblingsproblem</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vi kunne ikke hente kommuner akkurat nå. Dette kan skyldes nettverksproblemer eller at tjenesten er midlertidig utilgjengelig. Vennligst prøv igjen senere.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleCloseError}>Ok, jeg forstår</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

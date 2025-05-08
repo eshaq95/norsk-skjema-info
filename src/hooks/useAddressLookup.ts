@@ -11,6 +11,11 @@ const canon = (s: string): string =>
    .toLowerCase()                   // lowercase
    .trim();                         // remove extra spaces
 
+// Cache configuration
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const MUNICIPALITY_CACHE_KEY = 'geonorge_municipalities_cache';
+const CACHE_TIMESTAMP_KEY = 'geonorge_municipalities_timestamp';
+
 export interface Municipality {
   id: string;
   name: string;
@@ -27,8 +32,44 @@ export interface HouseNumber {
   poststed: string;
 }
 
-// Cache for municipalities to avoid repeated fetching
+// In-memory cache for municipalities to avoid repeated fetching
 let municipalitiesCache: Municipality[] | null = null;
+
+// Helper function to get cached data
+const getCachedMunicipalities = (): Municipality[] | null => {
+  try {
+    const timestampStr = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+    if (!timestampStr) return null;
+    
+    const timestamp = parseInt(timestampStr, 10);
+    const now = Date.now();
+    
+    // Return null if cache is expired
+    if (now - timestamp > CACHE_DURATION) {
+      localStorage.removeItem(MUNICIPALITY_CACHE_KEY);
+      localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+      return null;
+    }
+    
+    const cachedData = localStorage.getItem(MUNICIPALITY_CACHE_KEY);
+    if (!cachedData) return null;
+    
+    return JSON.parse(cachedData);
+  } catch (error) {
+    console.error('Error reading from localStorage:', error);
+    return null;
+  }
+};
+
+// Helper function to save data to cache
+const cacheMunicipalities = (data: Municipality[]): void => {
+  try {
+    localStorage.setItem(MUNICIPALITY_CACHE_KEY, JSON.stringify(data));
+    localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+  } catch (error) {
+    console.error('Error saving to localStorage:', error);
+  }
+};
 
 export const useMunicipalities = () => {
   const fetchMunicipalities = async (query: string): Promise<Municipality[]> => {
@@ -38,44 +79,49 @@ export const useMunicipalities = () => {
     try {
       // Fetch all municipalities once and cache them
       if (!municipalitiesCache) {
-        console.log('Fetching all municipalities from Geonorge');
-        const res = await fetch(`${GEO_BASE}/kommuneinfo/v1/kommuner`, {
-          headers: {
-            'Accept': 'application/json'
+        // Try to get from localStorage first
+        const cachedMunicipalities = getCachedMunicipalities();
+        if (cachedMunicipalities) {
+          console.log(`Retrieved ${cachedMunicipalities.length} municipalities from localStorage cache`);
+          municipalitiesCache = cachedMunicipalities;
+        } else {
+          console.log('Fetching all municipalities from Geonorge');
+          const res = await fetch(`${GEO_BASE}/kommuneinfo/v1/kommuner`, {
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          
+          if (!res.ok) {
+            console.error(`HTTP error! status: ${res.status}`);
+            throw new Error(`Feil ved henting av kommuner: ${res.status}`);
           }
-        });
-        
-        if (!res.ok) {
-          console.error(`HTTP error! status: ${res.status}`);
-          return [];
+          
+          const data = await res.json();
+          
+          municipalitiesCache = data.map((kommune: any) => ({
+            id: kommune.kommunenummer,
+            name: kommune.kommunenavn ?? kommune.kommunenavnNorsk ?? kommune.navnNorsk ?? kommune.navn ?? "",
+          }));
+          
+          console.log(`Cached ${municipalitiesCache.length} municipalities`);
+          
+          // Save to localStorage for future use
+          cacheMunicipalities(municipalitiesCache);
         }
-        
-        const data = await res.json();
-        console.log("First municipality in response:", data[0]);
-        
-        municipalitiesCache = data.map((kommune: any) => ({
-          id: kommune.kommunenummer,
-          name: kommune.kommunenavn ?? kommune.kommunenavnNorsk ?? kommune.navnNorsk ?? kommune.navn ?? "",
-        }));
-        
-        console.log(`Cached ${municipalitiesCache.length} municipalities`);
-        console.log("Example first municipality:", municipalitiesCache[0]);
       }
       
       // Filter municipalities with canonical string comparison
       const canonicalQuery = canon(query);
-      console.log('Canonical query:', canonicalQuery);
       
       const filtered = municipalitiesCache.filter(kommune => 
         kommune.name && canon(kommune.name).includes(canonicalQuery)
       ).slice(0, 20); // Limit to 20 results
       
-      console.log(`Found ${filtered.length} municipalities matching "${query}"`, 
-                  filtered.length > 0 ? filtered.map(k => k.name).join(", ") : "none");
       return filtered;
     } catch (error) {
       console.error('Error fetching municipalities:', error);
-      return [];
+      throw error;
     }
   };
   
@@ -137,7 +183,7 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
     return streets;
   } catch (error) {
     console.error('Error fetching streets:', error);
-    return [];
+    throw error;
   }
 };
 
@@ -276,6 +322,6 @@ export const fetchHouseNumbers = async (municipalityId: string, streetName: stri
     return numbers;
   } catch (error) {
     console.error('Error fetching house numbers:', error);
-    return [];
+    throw error;
   }
 };
