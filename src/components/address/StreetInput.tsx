@@ -12,32 +12,39 @@ interface StreetInputProps {
 }
 
 const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelect, error, disabled }) => {
-  const [query, setQuery] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [selected, setSelected] = useState<Street | null>(null);
   const [options, setOptions] = useState<Street[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  // Fetch streets when municipality and query changes
+  // Reset input when municipality changes
   useEffect(() => {
+    setInputValue('');
+    setSelected(null);
+    setOptions([]);
+  }, [municipalityId]);
+  
+  // Fetch streets when input changes (not when selection changes)
+  useEffect(() => {
+    if (!isOpen || !municipalityId || inputValue.trim().length < 2) {
+      setOptions([]);
+      return;
+    }
+    
     const fetchStreetOptions = async () => {
-      if (municipalityId && query.length >= 2) {
-        setLoading(true);
-        console.log('Fetching streets for municipality:', municipalityId, 'query:', query);
-        const options = await fetchStreets(municipalityId, query);
-        console.log('Street options received:', options);
-        setOptions(options);
-        setLoading(false);
-        setIsOpen(true);
-      } else {
-        setOptions([]);
-        setIsOpen(false);
-      }
+      setLoading(true);
+      console.log('Fetching streets for municipality:', municipalityId, 'query:', inputValue);
+      const options = await fetchStreets(municipalityId, inputValue);
+      console.log('Street options received:', options);
+      setOptions(options);
+      setLoading(false);
     };
     
     const timeoutId = setTimeout(fetchStreetOptions, 300);
     return () => clearTimeout(timeoutId);
-  }, [municipalityId, query]);
+  }, [municipalityId, inputValue, isOpen]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -47,42 +54,51 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
       }
     };
     
-    // Close dropdown when focus moves to another input
-    const handleFocusOut = (event: FocusEvent) => {
-      // Small delay to allow click events to process first
-      setTimeout(() => {
-        if (
-          dropdownRef.current && 
-          !dropdownRef.current.contains(event.relatedTarget as Node)
-        ) {
-          setIsOpen(false);
-        }
-      }, 100);
-    };
-    
     document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('focusout', handleFocusOut);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('focusout', handleFocusOut);
     };
   }, []);
 
   const handleSelect = (street: Street) => {
     console.log('Selected street:', street);
-    setQuery(street.name);
+    setSelected(street);
+    setInputValue(street.name);
     onStreetSelect(street);
     setIsOpen(false);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    
+    // Reset selected when user starts typing again
+    if (selected) {
+      setSelected(null);
+    }
+    
+    // Show dropdown when input has at least 2 characters
+    if (value.length >= 2) {
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  };
+
   const handleInputClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent immediate closing
-    if (query.length >= 2 && options.length > 0) {
+    e.stopPropagation();
+    // Only show dropdown if we have valid search results
+    if (inputValue.length >= 2) {
       setIsOpen(true);
     }
   };
 
   const handleBlur = () => {
+    // If we have a selection but input doesn't match, restore input value
+    if (selected && inputValue !== selected.name) {
+      setInputValue(selected.name);
+    }
+    
     // Delayed closing to allow click events to process first
     setTimeout(() => {
       setIsOpen(false);
@@ -97,13 +113,13 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
       <div className="relative">
         <Input
           id="gate"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          value={inputValue}
+          onChange={handleInputChange}
           className="w-full"
           disabled={disabled}
           placeholder={disabled ? "Velg kommune først" : "Skriv inn gatenavn"}
           onClick={handleInputClick}
-          onFocus={() => query.length >= 2 && options.length > 0 && setIsOpen(true)}
+          onFocus={() => inputValue.length >= 2 && !disabled && setIsOpen(true)}
           onBlur={handleBlur}
         />
         
@@ -127,7 +143,7 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
           </ul>
         )}
         
-        {query.length >= 2 && !loading && isOpen && options.length === 0 && (
+        {inputValue.length >= 2 && !loading && isOpen && options.length === 0 && (
           <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg p-2 mt-1">
             <p className="text-sm text-gray-500">Ingen treff</p>
           </div>

@@ -10,7 +10,8 @@ interface MunicipalityInputProps {
 }
 
 const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySelect, error }) => {
-  const [query, setQuery] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [selected, setSelected] = useState<Municipality | null>(null);
   const [options, setOptions] = useState<Municipality[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -18,26 +19,25 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
   
   const getMunicipalities = useMunicipalities();
   
-  // Fetch municipalities when query changes
+  // Fetch municipalities when input changes (not when selection changes)
   useEffect(() => {
+    if (!isOpen || inputValue.trim().length < 2) {
+      setOptions([]);
+      return;
+    }
+    
     const fetchMunicipalities = async () => {
-      if (query.length >= 2) {
-        setLoading(true);
-        console.log('Fetching municipalities for query:', query);
-        const options = await getMunicipalities(query);
-        console.log('Municipality options received:', options);
-        setOptions(options);
-        setLoading(false);
-        setIsOpen(true);
-      } else {
-        setOptions([]);
-        setIsOpen(false);
-      }
+      setLoading(true);
+      console.log('Fetching municipalities for query:', inputValue);
+      const options = await getMunicipalities(inputValue);
+      console.log('Municipality options received:', options);
+      setOptions(options);
+      setLoading(false);
     };
     
     const timeoutId = setTimeout(fetchMunicipalities, 300);
     return () => clearTimeout(timeoutId);
-  }, [query, getMunicipalities]);
+  }, [inputValue, isOpen, getMunicipalities]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -47,39 +47,51 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
       }
     };
     
-    // Close dropdown when focus moves to another input
-    const handleFocusOut = (event: FocusEvent) => {
-      // Small delay to allow click events to process first
-      setTimeout(() => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.relatedTarget as Node)) {
-          setIsOpen(false);
-        }
-      }, 100);
-    };
-    
     document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('focusout', handleFocusOut);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('focusout', handleFocusOut);
     };
   }, []);
 
   const handleSelect = (municipality: Municipality) => {
     console.log('Selected municipality:', municipality);
-    setQuery(municipality.name);
+    setSelected(municipality);
+    setInputValue(municipality.name);
     onMunicipalitySelect(municipality);
     setIsOpen(false);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    
+    // Reset selected when user starts typing again
+    if (selected) {
+      setSelected(null);
+    }
+    
+    // Show dropdown when input has at least 2 characters
+    if (value.length >= 2) {
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  };
+
   const handleInputClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent immediate closing
-    if (query.length >= 2 && options.length > 0) {
+    e.stopPropagation();
+    // Only show dropdown if we have valid search results
+    if (inputValue.length >= 2) {
       setIsOpen(true);
     }
   };
   
   const handleBlur = () => {
+    // If we have a selection but input doesn't match, restore input value
+    if (selected && inputValue !== selected.name) {
+      setInputValue(selected.name);
+    }
+    
     // Delayed closing to allow click events to process first
     setTimeout(() => {
       setIsOpen(false);
@@ -94,12 +106,12 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
       <div className="relative">
         <Input
           id="kommune"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          value={inputValue}
+          onChange={handleInputChange}
           className="w-full"
           placeholder="Skriv inn kommune (minst 2 bokstaver)"
           onClick={handleInputClick}
-          onFocus={() => query.length >= 2 && options.length > 0 && setIsOpen(true)}
+          onFocus={() => inputValue.length >= 2 && setIsOpen(true)}
           onBlur={handleBlur}
         />
         
@@ -123,7 +135,7 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
           </ul>
         )}
         
-        {query.length >= 2 && !loading && isOpen && options.length === 0 && (
+        {inputValue.length >= 2 && !loading && isOpen && options.length === 0 && (
           <div className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg p-2 mt-1">
             <p className="text-sm text-gray-500">Ingen treff</p>
           </div>
