@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 
 // Updated API endpoints that support CORS
@@ -150,7 +151,7 @@ export const fetchStreets = async (
   const url =
     `${GEO_BASE}/adresser/v1/sok?sok=${sokParam}` +
     `&kommunenummer=${municipalityId}` +
-    `&treffPerSide=20`;                             // no fuzzy=true
+    `&treffPerSide=200`;                            // Increased from 20 to 200
     
   console.log('Fetching streets from URL:', url);
   
@@ -180,7 +181,8 @@ export const fetchStreets = async (
   const canonicalQuery = canon(cleanQuery);
   const streets = [...uniq.values()]
     .filter(street => canon(street.name).startsWith(canonicalQuery))
-    .sort((a, b) => a.name.localeCompare(b.name, "no"));
+    .sort((a, b) => a.name.localeCompare(b.name, "no"))
+    .slice(0, 20); // Limit the UI suggestions to 20 even though we fetch more
   
   console.log(`Found ${streets.length} matching streets that start with "${cleanQuery}"`);
   return streets;
