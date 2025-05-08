@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 
 // Updated API endpoints that support CORS
@@ -136,69 +135,57 @@ if (typeof window !== 'undefined') {
   };
 }
 
-export const fetchStreets = async (municipalityId: string, query: string): Promise<Street[]> => {
-  console.log('fetchStreets called with municipalityId:', municipalityId, 'query:', query);
-  if (!query || query.length < 2) return [];
-  
-  try {
-    /*  Jokertegn fungerer ikke sammen med fuzzy=true.
-        Regelen vi bruker er:
-          – 2-3 tegn  → prefix-søk  (jokertegn, fuzzy=false)
-          – ≥ 4 tegn → fuzzy-søk   (mer tolerant)                */
+export const fetchStreets = async (
+  municipalityId: string,
+  query: string
+): Promise<Street[]> => {
+  /* 1. Don't call API until user has typed at least 2 characters */
+  if (query.length < 2) return [];
 
-    const useWildcard = query.length < 4;
-    const sokParam = useWildcard
-        ? encodeURIComponent(query + "*")      // terr%2A - proper encoding of "*"
-        : encodeURIComponent(query);           // terrasse
-            
-    console.log('sokParam:', sokParam);
+  /* 2. Use prefix search for 2-3 characters -> te*  (fuzzy = false)
+        Use fuzzy search for ≥4 characters   -> terrasse  (fuzzy = true) */
+  const withWildcard = query.length < 4;
+  const sokParam = withWildcard
+    ? encodeURIComponent(query + "*")       // te*  ->  te%2A
+    : encodeURIComponent(query);            // terrasse
+
+  const url =
+    `${GEO_BASE}/adresser/v1/sok?sok=${sokParam}` +
+    `&kommunenummer=${municipalityId}` +
+    `&treffPerSide=20` +
+    (withWildcard ? "" : "&fuzzy=true");
     
-    const url = `${GEO_BASE}/adresser/v1/sok` + 
-                `?sok=${sokParam}` + 
-                `&kommunenummer=${encodeURIComponent(municipalityId)}` + 
-                `&treffPerSide=20` +
-                (useWildcard ? "" : "&fuzzy=true");      // only add fuzzy when not using *
-                
-    console.log('Fetching streets from URL:', url);
-    
-    const res = await fetch(url, {
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-    
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    
-    const data = await res.json();
-    
-    if (!data.adresser || !Array.isArray(data.adresser)) {
-      console.error('Unexpected API response format for streets:', data);
-      return [];
-    }
-    
-    // Create a Map to avoid duplicate streets
-    const uniqueStreets = new Map<string, Street>();
-    
-    data.adresser.forEach((adr: any) => {
-      if (adr.adressenavn) {
-        // Use the adressenavn as both id and name if no vegadresseId is available
-        const id = adr.vegadresseId || adr.adressenavn;
-        uniqueStreets.set(adr.adressenavn, {
-          id: id,
-          name: adr.adressenavn,
-        });
-      }
-    });
-    
-    const streets = Array.from(uniqueStreets.values());
-    console.log(`Found ${streets.length} matching streets`);
-    return streets;
-  } catch (error) {
-    console.error('Error fetching streets:', error);
-    throw error;
+  console.log('Fetching streets from URL:', url);
+  
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) {
+    console.error(`Street search failed: ${res.status}`);
+    throw new Error(`Street search failed: ${res.status}`);
   }
+
+  const data = await res.json();
+  
+  if (!data.adresser || !Array.isArray(data.adresser)) {
+    console.error('Unexpected API response format for streets:', data);
+    return [];
+  }
+
+  /* 3. Collect unique street names and sort alphabetically */
+  const uniq = new Map<string, Street>();
+  for (const a of data.adresser) {
+    if (!a.adressenavn) continue;
+    uniq.set(a.adressenavn, {
+      id: a.vegadresseId ?? a.adressenavn,
+      name: a.adressenavn,
+    });
+  }
+
+  const streets = [...uniq.values()].sort((a, b) =>
+    a.name.localeCompare(b.name, "no")
+  );
+  
+  console.log(`Found ${streets.length} matching streets`);
+  return streets;
 };
 
 export const fetchHouseNumbers = async (municipalityId: string, streetName: string): Promise<HouseNumber[]> => {
