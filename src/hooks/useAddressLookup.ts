@@ -141,7 +141,7 @@ export const fetchStreets = async (municipalityId: string, query: string): Promi
   if (query.length < 2) return [];
   
   try {
-    // Normalize the query and add wildcard if not already present
+    // Normalize the query and explicitly add wildcard if not already present
     const canonQ = canon(query);
     const wildcard = canonQ.endsWith("*") ? canonQ : `${canonQ}*`;
     
