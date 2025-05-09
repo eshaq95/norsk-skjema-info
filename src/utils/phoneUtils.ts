@@ -28,13 +28,21 @@ export function normalisePhone(phone: string): string {
 
 /**
  * Validates if a phone number is a valid Norwegian number.
- * Norwegian numbers are 8 digits, and may or may not include the country code +47.
+ * Norwegian numbers must be exactly 8 digits with no country code.
  */
 export function isValidNorwegian(phone: string): boolean {
   const normalized = normalisePhone(phone);
   
-  // Valid Norwegian number: either 8 digits or 10 digits starting with 47
-  return (normalized.length === 8) || (normalized.length === 10 && normalized.startsWith('47'));
+  // Phone must be exactly 8 digits
+  return normalized.length === 8;
+}
+
+/**
+ * Check if the phone has country code prefixes like +47 or 0047
+ */
+export function hasCountryCode(phone: string): boolean {
+  const normalized = normalisePhone(phone);
+  return normalized.length > 8 || phone.includes('+47') || phone.startsWith('0047');
 }
 
 /**

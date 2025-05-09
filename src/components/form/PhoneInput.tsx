@@ -2,8 +2,8 @@
 import React, { useState, useCallback } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatPhoneNumber, } from '@/utils/validation';
-import { normalisePhone, isValidNorwegian, lookup1881, PhoneLookupResult, PhoneOwner } from '@/utils/phoneUtils';
+import { formatPhoneNumber } from '@/utils/validation';
+import { normalisePhone, isValidNorwegian, hasCountryCode, lookup1881, PhoneLookupResult, PhoneOwner } from '@/utils/phoneUtils';
 import { Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { debounce } from 'lodash';
 import { useToast } from "@/hooks/use-toast";
@@ -39,21 +39,54 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     if (validationError) {
       setValidationError(null);
     }
+    
+    // Reset lookup status when the input changes
+    if (lookupStatus !== 'idle') {
+      setLookupStatus('idle');
+      setPhoneOwner(null);
+    }
+    
+    // Live validation
+    const normalized = normalisePhone(formattedValue);
+    if (normalized.length > 0) {
+      // Check for invalid formats
+      if (hasCountryCode(formattedValue)) {
+        setValidationError('Kun 8 siffer uten landskode (+47/0047)');
+      }
+    }
   };
 
   // Perform phone lookup with debounce - only triggered on blur
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedLookup = useCallback(
     debounce(async (phone: string) => {
-      if (!phone || phone.length < 8) return;
+      // Don't perform lookup if the field is empty
+      if (!phone || phone.trim() === '') {
+        setLookupStatus('idle');
+        return;
+      }
       
       const normalized = normalisePhone(phone);
       setNormalizedPhone(normalized);
       
+      // Validate phone number format
       if (!isValidNorwegian(normalized)) {
-        setValidationError('Ugyldig norsk nummer');
+        if (normalized.length !== 8) {
+          setValidationError('Telefonnummer må være 8 siffer');
+        } else if (hasCountryCode(phone)) {
+          setValidationError('Kun 8 siffer uten landskode (+47/0047)');
+        } else {
+          setValidationError('Ugyldig norsk telefonnummer');
+        }
         setLookupStatus('error');
         setPhoneOwner(null);
+        return;
+      }
+      
+      // Don't lookup until we have 8 digits
+      if (normalized.length < 8) {
+        setValidationError('Telefonnummer må være 8 siffer');
+        setLookupStatus('idle');
         return;
       }
       
@@ -90,11 +123,22 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     []
   );
 
-  // Trigger lookup ONLY when focus is lost
+  // Trigger lookup ONLY when focus is lost and we have valid input
   const handleBlur = () => {
     setIsFocused(false);
     if (value && value.trim()) {
-      debouncedLookup(value);
+      const normalized = normalisePhone(value);
+      
+      // Only attempt lookup if we have exactly 8 digits and no country code
+      if (normalized.length === 8 && !hasCountryCode(value)) {
+        debouncedLookup(value);
+      } else if (normalized.length !== 8) {
+        setValidationError('Telefonnummer må være 8 siffer');
+        setLookupStatus('error');
+      } else if (hasCountryCode(value)) {
+        setValidationError('Kun 8 siffer uten landskode (+47/0047)');
+        setLookupStatus('error');
+      }
     }
   };
 
@@ -106,7 +150,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       case 'success':
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
       case 'not-found':
-        return <XCircle className="h-4 w-4 text-gray-400" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       case 'error':
         return <XCircle className="h-4 w-4 text-destructive" />;
       case 'api-unavailable':
@@ -135,7 +179,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={handleBlur}
           className={`pr-8 ${fieldHasError ? 'ring-2 ring-destructive' : ''}`}
-          placeholder="Skriv inn telefonnummer"
+          placeholder="Skriv inn 8 siffer uten landskode"
         />
         {value && value.length > 0 && (
           <div className="absolute inset-y-0 right-3 flex items-center">
@@ -149,7 +193,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       )}
       
       {lookupStatus === 'not-found' && !fieldHasError && (
-        <p className="text-sm text-muted-foreground">Nummeret er ikke oppført hos 1881.</p>
+        <p className="text-sm text-destructive">Nummeret er ikke oppført hos 1881.</p>
       )}
       
       {lookupStatus === 'api-unavailable' && !fieldHasError && (

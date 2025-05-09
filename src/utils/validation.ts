@@ -1,4 +1,6 @@
 
+import { normalisePhone, isValidNorwegian } from './phoneUtils';
+
 interface FormData {
   fornavn: string;
   etternavn: string;
@@ -40,10 +42,10 @@ export const validateForm = (formData: FormData): FormErrors => {
   if (!formData.telefon.trim()) {
     errors.telefon = 'Telefonnummer er påkrevd';
   } else {
-    // Remove spaces and check if it's a valid Norwegian phone number
-    const phoneNum = formData.telefon.replace(/\s/g, '');
-    if (!/^((\+|00)47)?[49]\d{7}$/.test(phoneNum)) {
-      errors.telefon = 'Ugyldig telefonnummer. Bruk norsk format';
+    // Use the improved validation from phoneUtils
+    const normalized = normalisePhone(formData.telefon);
+    if (!isValidNorwegian(formData.telefon)) {
+      errors.telefon = 'Telefonnummer må være 8 siffer uten landskode';
     }
   }
   
@@ -74,30 +76,18 @@ export const formatPhoneNumber = (value: string): string => {
   // Remove all non-digits
   const phoneNum = value.replace(/\D/g, '');
   
-  // Apply Norwegian phone number formatting
-  if (phoneNum.startsWith('0047') || phoneNum.startsWith('47')) {
-    // Handle numbers with country code
-    const countryCode = phoneNum.substring(0, phoneNum.startsWith('00') ? 4 : 2);
-    const restOfNumber = phoneNum.substring(phoneNum.startsWith('00') ? 4 : 2);
-    
-    if (restOfNumber.length <= 3) {
-      return `+${countryCode} ${restOfNumber}`;
-    }
-    if (restOfNumber.length <= 5) {
-      return `+${countryCode} ${restOfNumber.substring(0, 3)} ${restOfNumber.substring(3)}`;
-    }
-    return `+${countryCode} ${restOfNumber.substring(0, 3)} ${restOfNumber.substring(3, 5)} ${restOfNumber.substring(5, 8)}`;
-  } else {
-    // Handle domestic numbers
-    if (phoneNum.length <= 3) {
-      return phoneNum;
-    }
-    if (phoneNum.length <= 5) {
-      return `${phoneNum.substring(0, 3)} ${phoneNum.substring(3)}`;
-    }
-    if (phoneNum.length <= 8) {
-      return `${phoneNum.substring(0, 3)} ${phoneNum.substring(3, 5)} ${phoneNum.substring(5)}`;
-    }
+  // Do not format numbers with more than 8 digits to avoid encouraging users
+  // to enter numbers with country codes
+  if (phoneNum.length > 8) {
+    return value;
+  }
+  
+  // Apply Norwegian phone number formatting (without country code)
+  if (phoneNum.length <= 3) {
     return phoneNum;
   }
+  if (phoneNum.length <= 5) {
+    return `${phoneNum.substring(0, 3)} ${phoneNum.substring(3)}`;
+  }
+  return `${phoneNum.substring(0, 3)} ${phoneNum.substring(3, 5)} ${phoneNum.substring(5)}`;
 };
