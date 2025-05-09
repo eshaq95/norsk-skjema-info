@@ -47,7 +47,10 @@ serve(async (req) => {
     const apiKey = Deno.env.get('_1881_API_KEY');
     if (!apiKey) {
       console.error('_1881_API_KEY environment variable not set');
-      return new Response(JSON.stringify({ error: 'Server configuration error' }), { 
+      return new Response(JSON.stringify({ 
+        error: 'Server configuration error', 
+        message: 'API key not configured'
+      }), { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -56,18 +59,32 @@ serve(async (req) => {
     // Construct the URL for the 1881 API
     const apiUrl = `https://app.1881.no/api/1/phone?number=${number}&size=${size}`;
     
+    console.log(`Making request to 1881 API: ${apiUrl}`);
+    console.log(`Using API key that starts with: ${apiKey.substring(0, 5)}...`);
+
     // Make the request with the proper Authorization header
-    console.log(`Proxying request to ${apiUrl}`);
     const response = await fetch(apiUrl, {
+      method: 'GET',
       headers: {
         'Accept': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
     });
     
+    console.log(`1881 API responded with status: ${response.status}`);
+    
     // Check if the request was successful
     if (!response.ok) {
-      throw new Error(`1881 API responded with ${response.status}: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`1881 API error response: ${errorText}`);
+      
+      return new Response(JSON.stringify({ 
+        error: `1881 API responded with ${response.status}`, 
+        message: errorText
+      }), { 
+        status: response.status === 401 ? 401 : 502, // Pass through 401 errors, use 502 for others
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
     
     // Parse and return the data
@@ -77,10 +94,12 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    console.error('Error proxying to 1881 API:', error);
+    console.error('Error in phone-lookup edge function:', error);
+    
     return new Response(JSON.stringify({ 
       error: 'Failed to fetch data from 1881 API',
-      message: error.message 
+      message: error.message,
+      stack: error.stack
     }), { 
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

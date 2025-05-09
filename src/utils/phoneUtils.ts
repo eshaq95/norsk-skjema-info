@@ -47,15 +47,29 @@ export function isValidNorwegian(phone: string): boolean {
  */
 export async function lookup1881(phone: string): Promise<PhoneLookupResult> {
   try {
+    console.log(`Looking up phone number: ${phone}`);
+    
     // Use the Supabase edge function to proxy the request
-    // Fix: Using the correct parameters format for the invoke method
     const { data, error } = await supabase.functions.invoke('phone-lookup', {
+      method: 'POST',
       body: { number: phone }
     });
     
     if (error) {
       console.error('Error calling phone-lookup function:', error);
       throw new Error(`Failed to lookup phone number: ${error.message}`);
+    }
+    
+    if (!data) {
+      console.error('No data returned from phone-lookup function');
+      throw new Error('No data returned from phone lookup');
+    }
+    
+    console.log('Phone lookup response:', data);
+    
+    // If the API returned an empty content array, return an empty result
+    if (!data.content || !Array.isArray(data.content)) {
+      return { content: [], hasMore: false };
     }
     
     return data;
