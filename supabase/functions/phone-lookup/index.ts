@@ -56,19 +56,26 @@ serve(async (req) => {
       });
     }
 
-    // Update the API endpoint to use www.1881.no instead, which seems to be the correct domain
-    const apiUrl = `https://www.1881.no/api/1/phone?number=${number}&size=${size}`;
+    // Normalize the phone number - ensure it starts with +47 if it's 8 digits
+    let formattedNumber = number;
+    if (number.length === 8 && !number.startsWith('+47')) {
+      formattedNumber = '+47' + number;
+    } else if (number.length === 10 && number.startsWith('47')) {
+      formattedNumber = '+' + number;
+    }
+    
+    // Use the correct API endpoint and format for the new 1881 Search API
+    const apiUrl = `https://api.1881.no/search?phoneNumber=${encodeURIComponent(formattedNumber)}&size=${size}`;
     
     console.log(`Making request to 1881 API: ${apiUrl}`);
-    console.log(`Using API key that starts with: ${apiKey.substring(0, 5)}...`);
-
-    // Make the request with the proper Authorization header
+    
+    // Make the request with the proper Subscription Key header
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'User-Agent': 'Mozilla/5.0 (Supabase Edge Function)'  // Using a more standard User-Agent
+        'Ocp-Apim-Subscription-Key': apiKey, // Using subscription key header for this API
+        'User-Agent': 'Mozilla/5.0 (Supabase Edge Function)'
       },
     });
     
@@ -90,7 +97,22 @@ serve(async (req) => {
     
     // Parse and return the data
     const data = await response.json();
-    return new Response(JSON.stringify(data), { 
+    
+    // Format the response to match the expected structure in phoneUtils.ts
+    const formattedData = {
+      content: data.hits && data.hits.length > 0 
+        ? data.hits.map(hit => ({
+            id: hit.id || '',
+            name: hit.name || '',
+            address: hit.address ? hit.address.street || '' : '',
+            postnr: hit.address ? hit.address.postCode || '' : '',
+            poststed: hit.address ? hit.address.postArea || '' : '',
+          }))
+        : [],
+      hasMore: data.hasMore || false
+    };
+    
+    return new Response(JSON.stringify(formattedData), { 
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

@@ -17,14 +17,22 @@ export default async function handler(req, res) {
   }
   
   try {
-    // Update the URL to the correct 1881 API endpoint
-    const url = `https://www.1881.no/api/1/phone?number=${number}&size=${size}`;
+    // Normalize the phone number - ensure it starts with +47 if it's 8 digits
+    let formattedNumber = number;
+    if (number.length === 8 && !number.startsWith('+47')) {
+      formattedNumber = '+47' + number;
+    } else if (number.length === 10 && number.startsWith('47')) {
+      formattedNumber = '+' + number;
+    }
     
-    // Make the request with the proper Authorization header
+    // Use the correct API endpoint for the new 1881 Search API
+    const url = `https://api.1881.no/search?phoneNumber=${encodeURIComponent(formattedNumber)}&size=${size}`;
+    
+    // Make the request with the proper Subscription Key header
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${process.env._1881_API_KEY}`, // API key from environment variables
+        'Ocp-Apim-Subscription-Key': process.env._1881_API_KEY, // API key from environment variables
         'User-Agent': 'Mozilla/5.0' // Standard User-Agent
       },
     });
@@ -36,7 +44,22 @@ export default async function handler(req, res) {
     
     // Parse and return the data
     const data = await response.json();
-    return res.status(200).json(data);
+    
+    // Format the response to match the expected structure
+    const formattedData = {
+      content: data.hits && data.hits.length > 0 
+        ? data.hits.map(hit => ({
+            id: hit.id || '',
+            name: hit.name || '',
+            address: hit.address ? hit.address.street || '' : '',
+            postnr: hit.address ? hit.address.postCode || '' : '',
+            poststed: hit.address ? hit.address.postArea || '' : '',
+          }))
+        : [],
+      hasMore: data.hasMore || false
+    };
+    
+    return res.status(200).json(formattedData);
   } catch (error) {
     console.error('Error proxying to 1881 API:', error);
     return res.status(500).json({ 
