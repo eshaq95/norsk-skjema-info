@@ -56,23 +56,14 @@ serve(async (req) => {
       });
     }
 
-    // Normalize the phone number for the API
-    // Remove all non-digit characters
-    let formattedNumber = number.replace(/\D/g, '');
+    // Remove all non-digit characters and ensure we use just the original number
+    const formattedNumber = number.replace(/\D/g, '');
     
-    // Ensure the phone number has the correct format for the API (E.164 without +)
-    // For Norwegian numbers: if 8 digits, add 47 prefix
-    if (formattedNumber.length === 8) {
-      formattedNumber = '47' + formattedNumber;
-    } else if (formattedNumber.startsWith('+')) {
-      // If there's a + sign, remove it
-      formattedNumber = formattedNumber.substring(1);
-    }
-    
+    // No automatic prefix - use the number as provided by the user
     console.log(`Attempting to look up phone number: ${formattedNumber}`);
     
     try {
-      // Use the correct 1881 API endpoint
+      // Use the correct 1881 API endpoint, without automatically adding 47 prefix
       const apiUrl = `https://services.api1881.no/lookup/phonenumber/${formattedNumber}`;
       console.log(`Making request to 1881 API: ${apiUrl}`);
       

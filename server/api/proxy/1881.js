@@ -15,15 +15,8 @@ export default async function handler(req, res) {
   }
   
   try {
-    // Normalize the phone number for the API (E.164 without +)
-    let formattedNumber = number.replace(/\D/g, '');
-    
-    // If the number is exactly 8 digits, add Norwegian country code
-    if (formattedNumber.length === 8) {
-      formattedNumber = '47' + formattedNumber;
-    } else if (formattedNumber.startsWith('+')) {
-      formattedNumber = formattedNumber.substring(1);
-    }
+    // Just use the clean digits without adding country code prefix
+    const formattedNumber = number.replace(/\D/g, '');
     
     // Use the correct 1881 API endpoint
     const url = `https://services.api1881.no/lookup/phonenumber/${formattedNumber}`;
@@ -45,10 +38,13 @@ export default async function handler(req, res) {
     // Parse and return the data
     const data = await response.json();
     
+    // Handle null data and contacts safely
+    const contacts = data && data.contacts ? data.contacts : [];
+    
     // Format the response to match the expected structure
     const formattedData = {
-      content: data.contacts && data.contacts.length > 0 
-        ? data.contacts.map(contact => ({
+      content: contacts.length > 0 
+        ? contacts.map(contact => ({
             id: contact.id || '',
             name: contact.name || '',
             address: contact.address ? contact.address.street || '' : '',

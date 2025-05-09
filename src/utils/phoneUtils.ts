@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Phone Types
@@ -18,18 +19,11 @@ export interface PhoneLookupResult {
 
 /**
  * Formats a Norwegian phone number.
- * Removes any non-digit characters and ensures the number starts with +47 if not already.
+ * Removes any non-digit characters.
  */
 export function normalisePhone(phone: string): string {
   // Remove all non-digit characters
-  let normalized = phone.replace(/\D/g, '');
-  
-  // If the number is 8 digits and doesn't start with a country code, add +47 (Norway)
-  if (normalized.length === 8) {
-    normalized = `47${normalized}`;
-  }
-  
-  return normalized;
+  return phone.replace(/\D/g, '');
 }
 
 /**
@@ -44,29 +38,12 @@ export function isValidNorwegian(phone: string): boolean {
 }
 
 /**
- * Formats a phone number for display in the 1881 API format
- * For the services.api1881.no endpoint, removes the + sign if present
+ * Formats a phone number for the 1881 API
+ * For the services.api1881.no endpoint, returns just the digits without country code
  */
 export function format1881PhoneNumber(phone: string): string {
   // Remove all non-digit characters
-  let formatted = phone.replace(/\D/g, '');
-  
-  // If the number is 8 digits (Norwegian format without country code)
-  if (formatted.length === 8) {
-    return '47' + formatted; // Add country code without +
-  } 
-  // If it's 10 digits starting with 47 (Norwegian format with country code)
-  else if (formatted.length === 10 && formatted.startsWith('47')) {
-    return formatted;
-  }
-  // If it already has a + sign, remove it
-  else if (phone.startsWith('+')) {
-    return phone.substring(1);
-  }
-  // Otherwise just return the digits
-  else {
-    return formatted;
-  }
+  return phone.replace(/\D/g, '');
 }
 
 /**
@@ -76,7 +53,7 @@ export async function lookup1881(phone: string): Promise<PhoneLookupResult> {
   try {
     console.log(`Looking up phone number: ${phone}`);
     
-    // Format the phone number properly for the API (using E.164 without plus sign)
+    // Format the phone number but don't add 47 prefix
     const formattedNumber = format1881PhoneNumber(phone);
     
     // Use the Supabase edge function to proxy the request
