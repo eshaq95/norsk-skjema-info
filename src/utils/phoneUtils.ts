@@ -1,3 +1,4 @@
+
 /**
  * Norwegian phone number utilities
  */
@@ -69,9 +70,9 @@ export const lookup1881 = async (num: string): Promise<PhoneLookupResult | null>
   }
   
   try {
-    // Fetch from 1881 API
+    // Fetch from 1881 API with correct endpoint
     const res = await fetch(
-      `https://app.1881.no/search?phoneNumber=%2B47${num}&size=1`,
+      `https://app.1881.no/api/1/phone?number=${num}&size=1`,
       { headers: { Accept: 'application/json' } }
     );
     
