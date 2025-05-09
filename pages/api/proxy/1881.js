@@ -17,14 +17,15 @@ export default async function handler(req, res) {
   }
   
   try {
-    // Construct the URL for the 1881 API
-    const url = `https://app.1881.no/api/1/phone?number=${number}&size=${size}`;
+    // Update the URL to the correct 1881 API endpoint
+    const url = `https://www.1881.no/api/1/phone?number=${number}&size=${size}`;
     
     // Make the request with the proper Authorization header
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json',
         'Authorization': `Bearer ${process.env._1881_API_KEY}`, // API key from environment variables
+        'User-Agent': 'Mozilla/5.0' // Standard User-Agent
       },
     });
     
