@@ -17,23 +17,18 @@ export default async function handler(req, res) {
   }
   
   try {
-    // Normalize the phone number - ensure it starts with +47 if it's 8 digits
+    // Normalize the phone number - format for the API (E.164 without +)
     let formattedNumber = number.replace(/\D/g, '');
     
     // If the number is exactly 8 digits, add Norwegian country code
     if (formattedNumber.length === 8) {
-      formattedNumber = '+47' + formattedNumber;
-    } else if (formattedNumber.length === 10 && formattedNumber.startsWith('47')) {
-      formattedNumber = '+' + formattedNumber;
-    } else {
-      // Add + prefix if missing
-      if (!formattedNumber.startsWith('+')) {
-        formattedNumber = '+' + formattedNumber;
-      }
+      formattedNumber = '47' + formattedNumber;
+    } else if (formattedNumber.startsWith('+')) {
+      formattedNumber = formattedNumber.substring(1);
     }
     
-    // Use the correct API endpoint for the 1881 Search API
-    const url = `https://api.1881.no/search?phoneNumber=${encodeURIComponent(formattedNumber)}&size=${size}`;
+    // Use the correct API endpoint for the 1881 Lookup API
+    const url = `https://services.api1881.no/lookup/phonenumber/${formattedNumber}`;
     
     // Make the request with the proper Subscription Key header
     const response = await fetch(url, {
@@ -54,16 +49,16 @@ export default async function handler(req, res) {
     
     // Format the response to match the expected structure
     const formattedData = {
-      content: data.hits && data.hits.length > 0 
-        ? data.hits.map(hit => ({
-            id: hit.id || '',
-            name: hit.name || '',
-            address: hit.address ? hit.address.street || '' : '',
-            postnr: hit.address ? hit.address.postCode || '' : '',
-            poststed: hit.address ? hit.address.postArea || '' : '',
+      content: data.contacts && data.contacts.length > 0 
+        ? data.contacts.map(contact => ({
+            id: contact.id || '',
+            name: contact.name || '',
+            address: contact.address ? contact.address.street || '' : '',
+            postnr: contact.address ? contact.address.postCode || '' : '',
+            poststed: contact.address ? contact.address.postArea || '' : '',
           }))
         : [],
-      hasMore: data.hasMore || false
+      hasMore: false // The API doesn't return a hasMore property
     };
     
     return res.status(200).json(formattedData);
