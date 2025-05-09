@@ -93,10 +93,13 @@ serve(async (req) => {
       
       const data = await response.json();
       
+      // Add proper null checks for data and contacts
+      const contacts = data && data.contacts ? data.contacts : [];
+      
       // Format the response to match the expected structure
       const formattedData = {
-        content: data.contacts && data.contacts.length > 0 
-          ? data.contacts.map(contact => ({
+        content: contacts.length > 0 
+          ? contacts.map(contact => ({
               id: contact.id || '',
               name: contact.name || '',
               address: contact.address ? contact.address.street || '' : '',
