@@ -25,27 +25,59 @@ exports.handler = async (event, context) => {
   }
   
   try {
-    // Construct the URL for the 1881 API
-    const url = `https://app.1881.no/api/1/phone?number=${number}&size=${size}`;
+    // Normalize the phone number
+    let formattedNumber = number.replace(/\D/g, '');
     
-    // Make the request with the proper Authorization header
+    // If the number is exactly 8 digits, add Norwegian country code
+    if (formattedNumber.length === 8) {
+      formattedNumber = '+47' + formattedNumber;
+    } else if (formattedNumber.length === 10 && formattedNumber.startsWith('47')) {
+      formattedNumber = '+' + formattedNumber;
+    } else {
+      // Add + prefix if missing
+      if (!formattedNumber.startsWith('+')) {
+        formattedNumber = '+' + formattedNumber;
+      }
+    }
+    
+    // Use the correct 1881 API endpoint
+    const url = `https://api.1881.no/search?phoneNumber=${encodeURIComponent(formattedNumber)}&size=${size}`;
+    
+    // Make the request with the proper Subscription Key header
     const response = await fetch(url, {
       headers: {
         'Accept': 'application/json',
-        'Authorization': `Bearer ${process.env._1881_API_KEY}`, // API key from environment variables
+        'Ocp-Apim-Subscription-Key': process.env._1881_API_KEY, // API key from environment variables
+        'User-Agent': 'Mozilla/5.0 (Netlify Function)'
       },
     });
     
     // Check if the request was successful
     if (!response.ok) {
-      throw new Error(`1881 API responded with ${response.status}: ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`1881 API responded with ${response.status}: ${errorText.substring(0, 200)}`);
     }
     
     // Parse and return the data
     const data = await response.json();
+    
+    // Format the response to match the expected structure
+    const formattedData = {
+      content: data.hits && data.hits.length > 0 
+        ? data.hits.map(hit => ({
+            id: hit.id || '',
+            name: hit.name || '',
+            address: hit.address ? hit.address.street || '' : '',
+            postnr: hit.address ? hit.address.postCode || '' : '',
+            poststed: hit.address ? hit.address.postArea || '' : '',
+          }))
+        : [],
+      hasMore: data.hasMore || false
+    };
+    
     return {
       statusCode: 200,
-      body: JSON.stringify(data),
+      body: JSON.stringify(formattedData),
     };
   } catch (error) {
     console.error('Error proxying to 1881 API:', error);

@@ -57,19 +57,23 @@ serve(async (req) => {
     }
 
     // Normalize the phone number - ensure it starts with +47 if it's 8 digits
-    let formattedNumber = number;
-    if (number.length === 8 && !number.startsWith('+47')) {
-      formattedNumber = '+47' + number;
-    } else if (number.length === 10 && number.startsWith('47')) {
-      formattedNumber = '+' + number;
+    let formattedNumber = number.replace(/\D/g, '');
+    // If the number is exactly 8 digits, add Norwegian country code
+    if (formattedNumber.length === 8) {
+      formattedNumber = '+47' + formattedNumber;
+    } else if (formattedNumber.length === 10 && formattedNumber.startsWith('47')) {
+      formattedNumber = '+' + formattedNumber;
+    } else {
+      // Add + prefix if missing
+      if (!formattedNumber.startsWith('+')) {
+        formattedNumber = '+' + formattedNumber;
+      }
     }
     
-    // Due to issues with the 1881 API, we'll create a fallback implementation
-    // This creates a mock successful response when the real API fails
     console.log(`Attempting to look up phone number: ${formattedNumber}`);
     
     try {
-      // Try the new 1881 Search API first
+      // Use the correct 1881 Search API endpoint
       const apiUrl = `https://api.1881.no/search?phoneNumber=${encodeURIComponent(formattedNumber)}&size=${size}`;
       console.log(`Making request to 1881 API: ${apiUrl}`);
       
@@ -112,7 +116,6 @@ serve(async (req) => {
       console.error('Error accessing 1881 API:', apiError);
       
       // When the real API fails, return a fallback empty response
-      // This prevents the frontend from crashing but shows "no results"
       return new Response(JSON.stringify({
         content: [],
         hasMore: false,

@@ -6,7 +6,6 @@
  * The example below is for a generic Express/Node.js setup
  */
 
-// Example using Express.js
 export default async function handler(req, res) {
   // Get the query parameters
   const { number, size = 1 } = req.query;
@@ -16,15 +15,22 @@ export default async function handler(req, res) {
   }
   
   try {
-    // Normalize the phone number - ensure it starts with +47 if it's 8 digits
-    let formattedNumber = number;
-    if (number.length === 8 && !number.startsWith('+47')) {
-      formattedNumber = '+47' + number;
-    } else if (number.length === 10 && number.startsWith('47')) {
-      formattedNumber = '+' + number;
+    // Normalize the phone number
+    let formattedNumber = number.replace(/\D/g, '');
+    
+    // If the number is exactly 8 digits, add Norwegian country code
+    if (formattedNumber.length === 8) {
+      formattedNumber = '+47' + formattedNumber;
+    } else if (formattedNumber.length === 10 && formattedNumber.startsWith('47')) {
+      formattedNumber = '+' + formattedNumber;
+    } else {
+      // Add + prefix if missing
+      if (!formattedNumber.startsWith('+')) {
+        formattedNumber = '+' + formattedNumber;
+      }
     }
     
-    // Use the correct API endpoint for the new 1881 Search API
+    // Use the correct 1881 API endpoint
     const url = `https://api.1881.no/search?phoneNumber=${encodeURIComponent(formattedNumber)}&size=${size}`;
     
     // Make the request with the proper Subscription Key header
@@ -32,7 +38,7 @@ export default async function handler(req, res) {
       headers: {
         'Accept': 'application/json',
         'Ocp-Apim-Subscription-Key': process.env._1881_API_KEY, // API key from environment variables
-        'User-Agent': 'Mozilla/5.0' // Standard User-Agent
+        'User-Agent': 'Mozilla/5.0 (Server API)'
       },
     });
     
