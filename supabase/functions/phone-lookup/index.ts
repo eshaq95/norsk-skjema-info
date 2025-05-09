@@ -56,17 +56,16 @@ serve(async (req) => {
       });
     }
 
-    // Normalize the phone number - ensure it starts with +47 if it's 8 digits
+    // Normalize the phone number format for the API
+    // Remove any non-digit characters
     let formattedNumber = number.replace(/\D/g, '');
-    // If the number is exactly 8 digits, add Norwegian country code
-    if (formattedNumber.length === 8) {
-      formattedNumber = '+47' + formattedNumber;
-    } else if (formattedNumber.length === 10 && formattedNumber.startsWith('47')) {
-      formattedNumber = '+' + formattedNumber;
-    } else {
-      // Add + prefix if missing
-      if (!formattedNumber.startsWith('+')) {
+    
+    // Ensure the phone number has the correct format for the API
+    if (!formattedNumber.startsWith('+')) {
+      if (formattedNumber.startsWith('47')) {
         formattedNumber = '+' + formattedNumber;
+      } else {
+        formattedNumber = '+47' + formattedNumber;
       }
     }
     

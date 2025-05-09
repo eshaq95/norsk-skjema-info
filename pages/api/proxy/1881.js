@@ -18,14 +18,21 @@ export default async function handler(req, res) {
   
   try {
     // Normalize the phone number - ensure it starts with +47 if it's 8 digits
-    let formattedNumber = number;
-    if (number.length === 8 && !number.startsWith('+47')) {
-      formattedNumber = '+47' + number;
-    } else if (number.length === 10 && number.startsWith('47')) {
-      formattedNumber = '+' + number;
+    let formattedNumber = number.replace(/\D/g, '');
+    
+    // If the number is exactly 8 digits, add Norwegian country code
+    if (formattedNumber.length === 8) {
+      formattedNumber = '+47' + formattedNumber;
+    } else if (formattedNumber.length === 10 && formattedNumber.startsWith('47')) {
+      formattedNumber = '+' + formattedNumber;
+    } else {
+      // Add + prefix if missing
+      if (!formattedNumber.startsWith('+')) {
+        formattedNumber = '+' + formattedNumber;
+      }
     }
     
-    // Use the correct API endpoint for the new 1881 Search API
+    // Use the correct API endpoint for the 1881 Search API
     const url = `https://api.1881.no/search?phoneNumber=${encodeURIComponent(formattedNumber)}&size=${size}`;
     
     // Make the request with the proper Subscription Key header

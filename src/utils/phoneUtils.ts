@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Phone Types
@@ -75,7 +76,7 @@ export async function lookup1881(phone: string): Promise<PhoneLookupResult> {
   try {
     console.log(`Looking up phone number: ${phone}`);
     
-    // Format the phone number properly for the API
+    // Format the phone number properly for the API with the + prefix
     const formattedNumber = format1881PhoneNumber(phone);
     
     // Use the Supabase edge function to proxy the request
@@ -100,7 +101,7 @@ export async function lookup1881(phone: string): Promise<PhoneLookupResult> {
     
     // Handle potential fallback response
     if (data._fallback) {
-      console.warn('Using fallback phone data:', data._message);
+      console.log('Using fallback phone data:', data._message);
     }
     
     // Return the data even if it's a fallback response
