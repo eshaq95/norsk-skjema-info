@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatPhoneNumber, } from '@/utils/validation';
 import { normalisePhone, isValidNorwegian, lookup1881, PhoneLookupResult, PhoneOwner } from '@/utils/phoneUtils';
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { debounce } from 'lodash';
+import { useToast } from "@/hooks/use-toast";
 
 interface PhoneInputProps {
   value: string;
@@ -14,7 +15,7 @@ interface PhoneInputProps {
   errorMessage?: string;
 }
 
-type LookupStatus = 'idle' | 'loading' | 'success' | 'not-found' | 'error';
+type LookupStatus = 'idle' | 'loading' | 'success' | 'not-found' | 'error' | 'api-unavailable';
 
 const PhoneInput: React.FC<PhoneInputProps> = ({
   value,
@@ -22,6 +23,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   hasError,
   errorMessage,
 }) => {
+  const { toast } = useToast();
   const [lookupStatus, setLookupStatus] = useState<LookupStatus>('idle');
   const [normalizedPhone, setNormalizedPhone] = useState<string>('');
   const [phoneOwner, setPhoneOwner] = useState<PhoneOwner | null>(null);
@@ -60,6 +62,18 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       try {
         const result = await lookup1881(normalized);
         
+        // Check if the result is a fallback (API unavailable)
+        if (result._fallback) {
+          setLookupStatus('api-unavailable');
+          setPhoneOwner(null);
+          toast({
+            title: "1881-tjenesten utilgjengelig",
+            description: "Kunne ikke koble til 1881. Tjenesten kan være midlertidig nede.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         if (result && result.content && result.content.length > 0) {
           setPhoneOwner(result.content[0]);
           setLookupStatus('success');
@@ -95,6 +109,8 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
         return <XCircle className="h-4 w-4 text-gray-400" />;
       case 'error':
         return <XCircle className="h-4 w-4 text-destructive" />;
+      case 'api-unavailable':
+        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
       default:
         return null;
     }
@@ -134,6 +150,10 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       
       {lookupStatus === 'not-found' && !fieldHasError && (
         <p className="text-sm text-muted-foreground">Nummeret er ikke oppført hos 1881.</p>
+      )}
+      
+      {lookupStatus === 'api-unavailable' && !fieldHasError && (
+        <p className="text-sm text-amber-500">1881-tjenesten er for øyeblikket utilgjengelig.</p>
       )}
       
       {phoneOwner && lookupStatus === 'success' && (

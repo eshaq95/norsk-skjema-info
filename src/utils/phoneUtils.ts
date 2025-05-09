@@ -13,6 +13,8 @@ export interface PhoneOwner {
 export interface PhoneLookupResult {
   content: PhoneOwner[];
   hasMore: boolean;
+  _fallback?: boolean;
+  _message?: string;
 }
 
 /**
@@ -57,24 +59,28 @@ export async function lookup1881(phone: string): Promise<PhoneLookupResult> {
     
     if (error) {
       console.error('Error calling phone-lookup function:', error);
-      throw new Error(`Failed to lookup phone number: ${error.message}`);
+      // Return an empty result rather than throwing, to prevent UI errors
+      return { content: [], hasMore: false, _fallback: true, _message: error.message };
     }
     
     if (!data) {
       console.error('No data returned from phone-lookup function');
-      throw new Error('No data returned from phone lookup');
+      // Return an empty result rather than throwing
+      return { content: [], hasMore: false, _fallback: true, _message: 'No data returned' };
     }
     
     console.log('Phone lookup response:', data);
     
-    // If the API returned an empty content array, return an empty result
-    if (!data.content || !Array.isArray(data.content)) {
-      return { content: [], hasMore: false };
+    // Handle potential fallback response
+    if (data._fallback) {
+      console.warn('Using fallback phone data:', data._message);
     }
     
+    // Return the data even if it's a fallback response
     return data;
   } catch (error) {
     console.error('Error in lookup1881:', error);
-    throw error;
+    // Return empty result to prevent UI errors
+    return { content: [], hasMore: false, _fallback: true, _message: 'Exception in lookup function' };
   }
 }
