@@ -12,8 +12,8 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Only allow GET requests
-  if (req.method !== 'GET') {
+  // Allow both POST and GET requests
+  if (req.method !== 'POST' && req.method !== 'GET') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { 
       status: 405,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -21,10 +21,20 @@ serve(async (req) => {
   }
 
   try {
-    // Parse the URL to get the query parameters
-    const url = new URL(req.url);
-    const number = url.searchParams.get('number');
-    const size = url.searchParams.get('size') || '1';
+    let number;
+    let size = '1';
+    
+    if (req.method === 'GET') {
+      // Parse the URL to get the query parameters
+      const url = new URL(req.url);
+      number = url.searchParams.get('number');
+      size = url.searchParams.get('size') || '1';
+    } else {
+      // Parse the request body for POST requests
+      const requestData = await req.json();
+      number = requestData.number;
+      size = requestData.size || '1';
+    }
     
     if (!number) {
       return new Response(JSON.stringify({ error: 'Missing required parameter: number' }), { 

@@ -48,8 +48,9 @@ export function isValidNorwegian(phone: string): boolean {
 export async function lookup1881(phone: string): Promise<PhoneLookupResult> {
   try {
     // Use the Supabase edge function to proxy the request
+    // Fix: Using the correct parameters format for the invoke method
     const { data, error } = await supabase.functions.invoke('phone-lookup', {
-      query: { number: phone }
+      body: { number: phone }
     });
     
     if (error) {
