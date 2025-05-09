@@ -7,6 +7,8 @@ import { validateForm } from '@/utils/validation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import PersonalInfoSection from './address/PersonalInfoSection';
 import AddressSection from './address/AddressSection';
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
 
 interface FormData {
   fornavn: string;
@@ -72,7 +74,75 @@ const NorskForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const saveToDatabase = async () => {
+    try {
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // User is authenticated - save profile to their account
+        const { error: profileError } = await supabase
+          .from('customer_profiles')
+          .upsert({
+            user_id: user.id,
+            fornavn: formData.fornavn,
+            etternavn: formData.etternavn,
+            telefon: formData.telefon,
+            adresse: formData.adresse,
+            postnummer: formData.postnummer,
+            poststed: formData.poststed,
+            kommune: formData.kommune,
+          }, { 
+            onConflict: 'user_id' 
+          });
+
+        if (profileError) throw profileError;
+
+        // Create order
+        const { error: orderError } = await supabase.from('orders').insert({
+          product_name: 'NordicMelatonin™',
+          price: 299.00,
+          status: 'pending'
+        });
+
+        if (orderError) throw orderError;
+      } else {
+        // User is not authenticated - create guest profile
+        const profileId = uuidv4();
+        
+        // Create customer profile
+        const { error: profileError } = await supabase.from('customer_profiles').insert({
+          id: profileId,
+          fornavn: formData.fornavn,
+          etternavn: formData.etternavn,
+          telefon: formData.telefon,
+          adresse: formData.adresse,
+          postnummer: formData.postnummer,
+          poststed: formData.poststed,
+          kommune: formData.kommune,
+        });
+        
+        if (profileError) throw profileError;
+        
+        // Create order linked to guest profile
+        const { error: orderError } = await supabase.from('orders').insert({
+          customer_id: profileId,
+          product_name: 'NordicMelatonin™',
+          price: 299.00,
+          status: 'pending'
+        });
+        
+        if (orderError) throw orderError;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving to database:', error);
+      return false;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const newErrors = validateForm(formData);
@@ -81,31 +151,46 @@ const NorskForm: React.FC = () => {
     if (Object.keys(newErrors).length === 0) {
       setIsSubmitting(true);
       
-      // Simulate form submission
-      setTimeout(() => {
-        setIsSubmitting(false);
-        console.log('Form submitted:', formData);
+      try {
+        const success = await saveToDatabase();
         
+        if (success) {
+          toast({
+            title: 'Bestilling mottatt!',
+            description: 'Vi sender NordicMelatonin™ til deg innen 1-3 virkedager.',
+          });
+          
+          // Reset form after successful submission
+          setFormData({
+            fornavn: '',
+            etternavn: '',
+            telefon: '',
+            adresse: '',
+            postnummer: '',
+            poststed: '',
+            kommune: '',
+            kommuneId: '',
+            gate: '',
+            gateId: '',
+            husnummer: ''
+          });
+        } else {
+          toast({
+            title: 'Noe gikk galt',
+            description: 'Vi kunne ikke fullføre bestillingen din. Vennligst prøv igjen senere.',
+            variant: 'destructive',
+          });
+        }
+      } catch (error) {
+        console.error('Submission error:', error);
         toast({
-          title: 'Skjema sendt!',
-          description: 'Din informasjon har blitt mottatt.',
+          title: 'Feil',
+          description: 'Det oppstod en feil ved behandling av skjemaet.',
+          variant: 'destructive',
         });
-        
-        // Reset form
-        setFormData({
-          fornavn: '',
-          etternavn: '',
-          telefon: '',
-          adresse: '',
-          postnummer: '',
-          poststed: '',
-          kommune: '',
-          kommuneId: '',
-          gate: '',
-          gateId: '',
-          husnummer: ''
-        });
-      }, 1000);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 

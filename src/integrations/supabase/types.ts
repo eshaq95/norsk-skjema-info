@@ -9,7 +9,89 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      customer_profiles: {
+        Row: {
+          adresse: string
+          created_at: string | null
+          etternavn: string
+          fornavn: string
+          id: string
+          kommune: string | null
+          postnummer: string
+          poststed: string
+          telefon: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          adresse: string
+          created_at?: string | null
+          etternavn: string
+          fornavn: string
+          id?: string
+          kommune?: string | null
+          postnummer: string
+          poststed: string
+          telefon: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          adresse?: string
+          created_at?: string | null
+          etternavn?: string
+          fornavn?: string
+          id?: string
+          kommune?: string | null
+          postnummer?: string
+          poststed?: string
+          telefon?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string | null
+          customer_id: string | null
+          id: string
+          price: number
+          product_name: string
+          quantity: number
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string
+          price: number
+          product_name: string
+          quantity?: number
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string
+          price?: number
+          product_name?: string
+          quantity?: number
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
