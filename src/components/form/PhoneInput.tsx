@@ -39,7 +39,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     }
   };
 
-  // Perform phone lookup with debounce
+  // Perform phone lookup with debounce - only triggered on blur
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedLookup = useCallback(
     debounce(async (phone: string) => {

@@ -1,4 +1,3 @@
-
 /**
  * Norwegian phone number utilities
  */
@@ -70,10 +69,9 @@ export const lookup1881 = async (num: string): Promise<PhoneLookupResult | null>
   }
   
   try {
-    // Use our proxy endpoint instead of calling 1881 API directly
-    // This avoids CORS issues and handles authentication on the server
+    // Use the Netlify serverless function as proxy endpoint
     const res = await fetch(
-      `/api/proxy/1881?number=${num}&size=1`,
+      `/.netlify/functions/proxy-1881?number=${num}&size=1`,
       { headers: { Accept: 'application/json' } }
     );
     
