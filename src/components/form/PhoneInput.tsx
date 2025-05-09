@@ -76,16 +76,14 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     []
   );
 
-  // Trigger lookup when normalized value changes
-  useEffect(() => {
-    if (value && value.trim() && !isFocused) {
+  // Trigger lookup ONLY when focus is lost
+  // Removed the duplicate call in useEffect to prevent double lookups
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (value && value.trim()) {
       debouncedLookup(value);
     }
-    
-    return () => {
-      debouncedLookup.cancel();
-    };
-  }, [value, debouncedLookup, isFocused]);
+  };
 
   // Get status icon based on lookup status
   const getStatusIcon = () => {
@@ -120,12 +118,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           value={value}
           onChange={handlePhoneInput}
           onFocus={() => setIsFocused(true)}
-          onBlur={() => {
-            setIsFocused(false);
-            if (value && value.trim()) {
-              debouncedLookup(value);
-            }
-          }}
+          onBlur={handleBlur}
           className={`pr-8 ${fieldHasError ? 'ring-2 ring-destructive' : ''}`}
           placeholder="Skriv inn telefonnummer"
         />
