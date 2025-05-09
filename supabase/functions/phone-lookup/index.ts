@@ -56,8 +56,8 @@ serve(async (req) => {
       });
     }
 
-    // Construct the URL for the 1881 API
-    const apiUrl = `https://app.1881.no/api/1/phone?number=${number}&size=${size}`;
+    // Construct the URL for the 1881 API with the correct domain: api.1881.no instead of app.1881.no
+    const apiUrl = `https://api.1881.no/api/1/phone?number=${number}&size=${size}`;
     
     console.log(`Making request to 1881 API: ${apiUrl}`);
     console.log(`Using API key that starts with: ${apiKey.substring(0, 5)}...`);
@@ -68,6 +68,7 @@ serve(async (req) => {
       headers: {
         'Accept': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
+        'User-Agent': 'Supabase Edge Function'  // Adding User-Agent header which might be required by some APIs
       },
     });
     
