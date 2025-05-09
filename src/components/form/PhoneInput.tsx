@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatPhoneNumber, } from '@/utils/validation';
@@ -77,7 +77,6 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   );
 
   // Trigger lookup ONLY when focus is lost
-  // Removed the duplicate call in useEffect to prevent double lookups
   const handleBlur = () => {
     setIsFocused(false);
     if (value && value.trim()) {

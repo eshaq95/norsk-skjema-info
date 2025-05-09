@@ -45,7 +45,7 @@ export interface PhoneOwner {
 }
 
 /**
- * Looks up a phone number in the 1881 directory
+ * Looks up a phone number in the 1881 directory via our proxy
  */
 export const lookup1881 = async (num: string): Promise<PhoneLookupResult | null> => {
   if (!isValidNorwegian(num)) return null;
@@ -70,9 +70,10 @@ export const lookup1881 = async (num: string): Promise<PhoneLookupResult | null>
   }
   
   try {
-    // Fetch from 1881 API with correct endpoint
+    // Use our proxy endpoint instead of calling 1881 API directly
+    // This avoids CORS issues and handles authentication on the server
     const res = await fetch(
-      `https://app.1881.no/api/1/phone?number=${num}&size=1`,
+      `/api/proxy/1881?number=${num}&size=1`,
       { headers: { Accept: 'application/json' } }
     );
     
