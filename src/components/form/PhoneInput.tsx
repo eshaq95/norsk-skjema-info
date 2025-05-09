@@ -52,6 +52,8 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       // Check for invalid formats
       if (hasCountryCode(formattedValue)) {
         setValidationError('Kun 8 siffer uten landskode (+47/0047)');
+      } else if (normalized.length > 8) {
+        setValidationError('Telefonnummer må være 8 siffer');
       }
     }
   };
@@ -70,23 +72,17 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       setNormalizedPhone(normalized);
       
       // Validate phone number format
-      if (!isValidNorwegian(normalized)) {
-        if (normalized.length !== 8) {
-          setValidationError('Telefonnummer må være 8 siffer');
-        } else if (hasCountryCode(phone)) {
-          setValidationError('Kun 8 siffer uten landskode (+47/0047)');
-        } else {
-          setValidationError('Ugyldig norsk telefonnummer');
-        }
+      if (hasCountryCode(phone)) {
+        setValidationError('Kun 8 siffer uten landskode (+47/0047)');
         setLookupStatus('error');
         setPhoneOwner(null);
         return;
       }
       
       // Don't lookup until we have 8 digits
-      if (normalized.length < 8) {
+      if (normalized.length !== 8) {
         setValidationError('Telefonnummer må være 8 siffer');
-        setLookupStatus('idle');
+        setLookupStatus('error');
         return;
       }
       
@@ -129,14 +125,18 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     if (value && value.trim()) {
       const normalized = normalisePhone(value);
       
-      // Only attempt lookup if we have exactly 8 digits and no country code
-      if (normalized.length === 8 && !hasCountryCode(value)) {
-        debouncedLookup(value);
-      } else if (normalized.length !== 8) {
-        setValidationError('Telefonnummer må være 8 siffer');
-        setLookupStatus('error');
-      } else if (hasCountryCode(value)) {
+      // Check for country code
+      if (hasCountryCode(value)) {
         setValidationError('Kun 8 siffer uten landskode (+47/0047)');
+        setLookupStatus('error');
+        return;
+      }
+      
+      // Only attempt lookup if we have exactly 8 digits
+      if (normalized.length === 8) {
+        debouncedLookup(value);
+      } else {
+        setValidationError('Telefonnummer må være 8 siffer');
         setLookupStatus('error');
       }
     }

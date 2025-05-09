@@ -1,5 +1,5 @@
 
-import { normalisePhone, isValidNorwegian } from './phoneUtils';
+import { normalisePhone, isValidNorwegian, hasCountryCode } from './phoneUtils';
 
 interface FormData {
   fornavn: string;
@@ -42,10 +42,15 @@ export const validateForm = (formData: FormData): FormErrors => {
   if (!formData.telefon.trim()) {
     errors.telefon = 'Telefonnummer er påkrevd';
   } else {
-    // Use the improved validation from phoneUtils
     const normalized = normalisePhone(formData.telefon);
-    if (!isValidNorwegian(formData.telefon)) {
-      errors.telefon = 'Telefonnummer må være 8 siffer uten landskode';
+    
+    // Check if it has country code
+    if (hasCountryCode(formData.telefon)) {
+      errors.telefon = 'Kun 8 siffer uten landskode (+47/0047)';
+    } 
+    // Check if it's exactly 8 digits
+    else if (normalized.length !== 8) {
+      errors.telefon = 'Telefonnummer må være 8 siffer';
     }
   }
   
@@ -76,18 +81,16 @@ export const formatPhoneNumber = (value: string): string => {
   // Remove all non-digits
   const phoneNum = value.replace(/\D/g, '');
   
-  // Do not format numbers with more than 8 digits to avoid encouraging users
-  // to enter numbers with country codes
-  if (phoneNum.length > 8) {
-    return value;
-  }
+  // Limit to 8 digits to enforce Norwegian phone number rules
+  // (without country code)
+  const limited = phoneNum.slice(0, 8);
   
   // Apply Norwegian phone number formatting (without country code)
-  if (phoneNum.length <= 3) {
-    return phoneNum;
+  if (limited.length <= 3) {
+    return limited;
   }
-  if (phoneNum.length <= 5) {
-    return `${phoneNum.substring(0, 3)} ${phoneNum.substring(3)}`;
+  if (limited.length <= 5) {
+    return `${limited.substring(0, 3)} ${limited.substring(3)}`;
   }
-  return `${phoneNum.substring(0, 3)} ${phoneNum.substring(3, 5)} ${phoneNum.substring(5)}`;
+  return `${limited.substring(0, 3)} ${limited.substring(3, 5)} ${limited.substring(5)}`;
 };
