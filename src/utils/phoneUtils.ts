@@ -10,7 +10,7 @@
 export const normalisePhone = (raw: string): string => {
   const digits = raw.replace(/\D/g, '');           // strip non-digits
   if (digits.startsWith('0047')) return digits.slice(4);
-  if (digits.startsWith('47') && digits.length === 10) return digits.slice(2);
+  if (digits.startsWith('47')) return digits.slice(2); // Remove 47 prefix regardless of length
   if (digits.startsWith('00')) return '';          // foreign => invalid for lookup
   return digits;
 };
