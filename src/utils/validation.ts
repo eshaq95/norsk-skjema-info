@@ -85,12 +85,15 @@ export const formatPhoneNumber = (value: string): string => {
   // (without country code)
   const limited = phoneNum.slice(0, 8);
   
-  // Apply Norwegian phone number formatting (without country code)
-  if (limited.length <= 3) {
+  // Apply Norwegian phone number formatting with pairs of digits (2-2-2-2 pattern)
+  if (limited.length <= 2) {
     return limited;
   }
-  if (limited.length <= 5) {
-    return `${limited.substring(0, 3)} ${limited.substring(3)}`;
+  if (limited.length <= 4) {
+    return `${limited.substring(0, 2)} ${limited.substring(2)}`;
   }
-  return `${limited.substring(0, 3)} ${limited.substring(3, 5)} ${limited.substring(5)}`;
+  if (limited.length <= 6) {
+    return `${limited.substring(0, 2)} ${limited.substring(2, 4)} ${limited.substring(4)}`;
+  }
+  return `${limited.substring(0, 2)} ${limited.substring(2, 4)} ${limited.substring(4, 6)} ${limited.substring(6)}`;
 };
