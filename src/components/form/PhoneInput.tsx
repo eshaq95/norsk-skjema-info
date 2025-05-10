@@ -1,9 +1,8 @@
-
 import React, { useState, useCallback } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatPhoneNumber } from '@/utils/validation';
-import { normalisePhone, isValidNorwegian, hasCountryCode, lookup1881, PhoneLookupResult, PhoneOwner } from '@/utils/phoneUtils';
+import { normalisePhone, isValidNorwegian, hasCountryCode, lookup1881, PhoneLookupResult, PhoneOwner, removeNorwegianCountryCode } from '@/utils/phoneUtils';
 import { Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { debounce } from 'lodash';
 import { useToast } from "@/hooks/use-toast";
@@ -47,12 +46,10 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     }
     
     // Live validation
-    const normalized = normalisePhone(formattedValue);
+    const normalized = removeNorwegianCountryCode(e.target.value);
     if (normalized.length > 0) {
-      // Check for invalid formats
-      if (hasCountryCode(formattedValue)) {
-        setValidationError('Kun 8 siffer uten landskode (+47/0047)');
-      } else if (normalized.length > 8) {
+      // Check if normalized is exactly 8 digits after country code removal
+      if (normalized.length > 8) {
         setValidationError('Telefonnummer må være 8 siffer');
       }
     }
@@ -123,18 +120,11 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   const handleBlur = () => {
     setIsFocused(false);
     if (value && value.trim()) {
-      const normalized = normalisePhone(value);
+      const normalized = removeNorwegianCountryCode(value);
       
-      // Check for country code
-      if (hasCountryCode(value)) {
-        setValidationError('Kun 8 siffer uten landskode (+47/0047)');
-        setLookupStatus('error');
-        return;
-      }
-      
-      // Only attempt lookup if we have exactly 8 digits
+      // Only attempt lookup if we have exactly 8 digits after country code removal
       if (normalized.length === 8) {
-        debouncedLookup(value);
+        debouncedLookup(normalized);
       } else {
         setValidationError('Telefonnummer må være 8 siffer');
         setLookupStatus('error');

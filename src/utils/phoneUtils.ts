@@ -27,6 +27,22 @@ export function normalisePhone(phone: string): string {
 }
 
 /**
+ * Removes Norwegian country code prefixes (+47, 0047) if present
+ * Returns only the 8-digit phone number
+ */
+export function removeNorwegianCountryCode(phone: string): string {
+  const normalized = normalisePhone(phone);
+  
+  // Remove +47 or 0047 prefix
+  if (normalized.startsWith('47') && normalized.length > 8) {
+    return normalized.substring(2);
+  }
+  
+  // Just return the 8 digits (or less if not complete)
+  return normalized.slice(0, 8);
+}
+
+/**
  * Validates if a phone number is a valid Norwegian number.
  * Norwegian numbers must be exactly 8 digits with no country code.
  */

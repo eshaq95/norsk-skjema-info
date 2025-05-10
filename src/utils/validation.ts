@@ -1,5 +1,4 @@
-
-import { normalisePhone, isValidNorwegian, hasCountryCode } from './phoneUtils';
+import { normalisePhone, isValidNorwegian, hasCountryCode, removeNorwegianCountryCode } from './phoneUtils';
 
 interface FormData {
   fornavn: string;
@@ -78,22 +77,18 @@ export const formatPhoneNumber = (value: string): string => {
   // Format the phone number as user types (for Norwegian numbers)
   if (!value) return '';
   
-  // Remove all non-digits
-  const phoneNum = value.replace(/\D/g, '');
-  
-  // Limit to 8 digits to enforce Norwegian phone number rules
-  // (without country code)
-  const limited = phoneNum.slice(0, 8);
+  // First strip away any country code and keep only up to 8 digits
+  const phoneNum = removeNorwegianCountryCode(value);
   
   // Apply Norwegian phone number formatting with pairs of digits (2-2-2-2 pattern)
-  if (limited.length <= 2) {
-    return limited;
+  if (phoneNum.length <= 2) {
+    return phoneNum;
   }
-  if (limited.length <= 4) {
-    return `${limited.substring(0, 2)} ${limited.substring(2)}`;
+  if (phoneNum.length <= 4) {
+    return `${phoneNum.substring(0, 2)} ${phoneNum.substring(2)}`;
   }
-  if (limited.length <= 6) {
-    return `${limited.substring(0, 2)} ${limited.substring(2, 4)} ${limited.substring(4)}`;
+  if (phoneNum.length <= 6) {
+    return `${phoneNum.substring(0, 2)} ${phoneNum.substring(2, 4)} ${phoneNum.substring(4)}`;
   }
-  return `${limited.substring(0, 2)} ${limited.substring(2, 4)} ${limited.substring(4, 6)} ${limited.substring(6)}`;
+  return `${phoneNum.substring(0, 2)} ${phoneNum.substring(2, 4)} ${phoneNum.substring(4, 6)} ${phoneNum.substring(6)}`;
 };
