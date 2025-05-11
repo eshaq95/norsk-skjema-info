@@ -3,7 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatPhoneNumber } from '@/utils/validation';
-import { normalisePhone, isValidNorwegian, hasCountryCode, lookup1881, PhoneLookupResult, PhoneOwner, removeNorwegianCountryCode } from '@/utils/phoneUtils';
+import { normalisePhone, isValidNorwegian, hasCountryCode, lookup1881, PhoneLookupResult, PhoneOwner, removeNorwegianCountryCode, formatDisplayPhone } from '@/utils/phoneUtils';
 import { Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { debounce } from 'lodash';
 import { useToast } from "@/hooks/use-toast";
@@ -58,7 +58,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     if (!value || value.trim() === '') return;
     
     // Format the phone number with proper spacing
-    const formattedValue = formatPhoneNumber(value);
+    const formattedValue = formatDisplayPhone(value);
     onChange(formattedValue);
     
     // Validate the phone number
@@ -174,7 +174,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       {/* Show when input has country code that will be automatically removed */}
       {hasCountryCodePrefix && isFocused && !fieldHasError && (
         <p className="text-xs text-green-600">
-          +47 landkode fjernes automatisk ved validering
+          +47/0047 landkode fjernes automatisk ved validering
         </p>
       )}
       

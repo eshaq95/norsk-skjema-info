@@ -1,5 +1,4 @@
-
-import { normalisePhone, isValidNorwegian, hasCountryCode, removeNorwegianCountryCode } from './phoneUtils';
+import { normalisePhone, isValidNorwegian, hasCountryCode, removeNorwegianCountryCode, formatDisplayPhone } from './phoneUtils';
 
 interface FormData {
   fornavn: string;
@@ -83,22 +82,6 @@ export const formatPhoneNumber = (value: string): string => {
   // Format the phone number as user types (for Norwegian numbers)
   if (!value) return '';
   
-  // Use our improved function that handles country codes
-  const phoneNum = removeNorwegianCountryCode(value);
-  
-  // Apply Norwegian phone number formatting with pairs of digits (2-2-2-2 pattern)
-  if (phoneNum.length <= 2) {
-    return phoneNum;
-  }
-  if (phoneNum.length <= 4) {
-    return `${phoneNum.substring(0, 2)} ${phoneNum.substring(2)}`;
-  }
-  if (phoneNum.length <= 6) {
-    return `${phoneNum.substring(0, 2)} ${phoneNum.substring(2, 4)} ${phoneNum.substring(4)}`;
-  }
-  if (phoneNum.length <= 8) {
-    return `${phoneNum.substring(0, 2)} ${phoneNum.substring(2, 4)} ${phoneNum.substring(4, 6)} ${phoneNum.substring(6)}`;
-  }
-  
-  return phoneNum;
+  // Use our improved formatting function that properly handles all country code formats
+  return formatDisplayPhone(value);
 };

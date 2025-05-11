@@ -33,7 +33,12 @@ export function normalisePhone(phone: string): string {
 export function removeNorwegianCountryCode(phone: string): string {
   const normalized = normalisePhone(phone);
   
-  // Remove +47/0047 prefix if present (handles both cases when the complete phone number is 10+ digits)
+  // Check for 0047 prefix
+  if (normalized.startsWith('0047') && normalized.length > 8) {
+    return normalized.substring(4);
+  }
+  
+  // Check for 47 prefix
   if (normalized.startsWith('47') && normalized.length > 8) {
     return normalized.substring(2);
   }
@@ -65,9 +70,11 @@ export function isValidNorwegian(phone: string): boolean {
  * Check if the phone has country code prefixes like +47 or 0047
  */
 export function hasCountryCode(phone: string): boolean {
+  const normalized = normalisePhone(phone);
   return phone.includes('+') || 
          phone.startsWith('00') || 
-         (normalisePhone(phone).startsWith('47') && normalisePhone(phone).length > 8);
+         (normalized.startsWith('47') && normalized.length > 8) ||
+         (normalized.startsWith('0047') && normalized.length > 8);
 }
 
 /**
@@ -77,12 +84,13 @@ export function hasCountryCode(phone: string): boolean {
 export function formatDisplayPhone(phone: string): string {
   const normalized = removeNorwegianCountryCode(phone);
   
-  // Group the digits in pairs for Norwegian formatting
+  // Group the digits in pairs for Norwegian formatting (XX XX XX XX)
   if (normalized.length <= 2) return normalized;
   if (normalized.length <= 4) return `${normalized.substring(0, 2)} ${normalized.substring(2)}`;
   if (normalized.length <= 6) return `${normalized.substring(0, 2)} ${normalized.substring(2, 4)} ${normalized.substring(4)}`;
+  if (normalized.length <= 8) return `${normalized.substring(0, 2)} ${normalized.substring(2, 4)} ${normalized.substring(4, 6)} ${normalized.substring(6, 8)}`;
   
-  return `${normalized.substring(0, 2)} ${normalized.substring(2, 4)} ${normalized.substring(4, 6)} ${normalized.substring(6, 8)}`;
+  return normalized;
 }
 
 /**
