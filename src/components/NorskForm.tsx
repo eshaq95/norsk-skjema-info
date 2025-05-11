@@ -22,6 +22,7 @@ interface FormData {
   gate: string;
   gateId: string;
   husnummer: string;
+  email: string; // Added email field for Chargebee
 }
 
 interface FormErrors {
@@ -34,6 +35,7 @@ interface FormErrors {
   kommune?: string;
   gate?: string;
   husnummer?: string;
+  email?: string; // Added email error field
 }
 
 const NorskForm: React.FC = () => {
@@ -49,6 +51,7 @@ const NorskForm: React.FC = () => {
     gate: '',
     gateId: '',
     husnummer: '',
+    email: '', // Initialize email field
   });
   
   const [errors, setErrors] = useState<FormErrors>({});
@@ -74,14 +77,76 @@ const NorskForm: React.FC = () => {
     }
   };
 
+  const proceedToChargebee = async (orderId: string, profileData: any) => {
+    try {
+      setIsSubmitting(true);
+      
+      // Customer data for Chargebee
+      const customer = {
+        first_name: formData.fornavn,
+        last_name: formData.etternavn,
+        email: formData.email,
+        phone: formData.telefon,
+        billing_address: {
+          first_name: formData.fornavn,
+          last_name: formData.etternavn,
+          line1: formData.adresse,
+          city: formData.poststed,
+          zip: formData.postnummer,
+          country: "NO",
+          phone: formData.telefon
+        }
+      };
+      
+      // Call Supabase edge function to create Chargebee hosted page
+      const { data, error } = await supabase.functions.invoke<{ url: string }>(
+        "create-chargebee-page",
+        { 
+          body: { 
+            orderId: orderId, 
+            customer: customer, 
+            priceNok: 299.00 
+          } 
+        }
+      );
+      
+      if (error || !data?.url) {
+        console.error('Error creating Chargebee page:', error);
+        toast({
+          title: 'Noe gikk galt',
+          description: 'Vi kunne ikke opprette betalingssiden. Vennligst prøv igjen senere.',
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return false;
+      }
+      
+      // Redirect to Chargebee hosted page
+      window.location.href = data.url;
+      return true;
+      
+    } catch (error) {
+      console.error('Error in payment process:', error);
+      toast({
+        title: 'Feil',
+        description: 'Det oppstod en feil ved behandling av betalingen.',
+        variant: 'destructive',
+      });
+      setIsSubmitting(false);
+      return false;
+    }
+  };
+
   const saveToDatabase = async () => {
     try {
       // Check if user is authenticated
       const { data: { user } } = await supabase.auth.getUser();
       
+      let profileId: string;
+      
       if (user) {
         // User is authenticated - save profile to their account
-        const { error: profileError } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('customer_profiles')
           .upsert({
             user_id: user.id,
@@ -94,48 +159,55 @@ const NorskForm: React.FC = () => {
             kommune: formData.kommune,
           }, { 
             onConflict: 'user_id' 
-          });
+          })
+          .select();
 
         if (profileError) throw profileError;
-
-        // Create order
-        const { error: orderError } = await supabase.from('orders').insert({
-          product_name: 'NordicMelatonin™',
-          price: 299.00,
-          status: 'pending'
-        });
-
-        if (orderError) throw orderError;
+        profileId = profileData?.[0]?.id || user.id;
       } else {
         // User is not authenticated - create guest profile
-        const profileId = uuidv4();
+        profileId = uuidv4();
         
         // Create customer profile
-        const { error: profileError } = await supabase.from('customer_profiles').insert({
-          id: profileId,
-          fornavn: formData.fornavn,
-          etternavn: formData.etternavn,
-          telefon: formData.telefon,
-          adresse: formData.adresse,
-          postnummer: formData.postnummer,
-          poststed: formData.poststed,
-          kommune: formData.kommune,
-        });
+        const { data: profileData, error: profileError } = await supabase
+          .from('customer_profiles')
+          .insert({
+            id: profileId,
+            fornavn: formData.fornavn,
+            etternavn: formData.etternavn,
+            telefon: formData.telefon,
+            adresse: formData.adresse,
+            postnummer: formData.postnummer,
+            poststed: formData.poststed,
+            kommune: formData.kommune,
+          })
+          .select();
         
         if (profileError) throw profileError;
-        
-        // Create order linked to guest profile
-        const { error: orderError } = await supabase.from('orders').insert({
+      }
+      
+      // Create order linked to profile
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
           customer_id: profileId,
           product_name: 'NordicMelatonin™',
           price: 299.00,
           status: 'pending'
+        })
+        .select();
+      
+      if (orderError) throw orderError;
+      
+      // Proceed to Chargebee payment
+      if (orderData && orderData[0]) {
+        return await proceedToChargebee(orderData[0].id, {
+          id: profileId,
+          ...formData
         });
-        
-        if (orderError) throw orderError;
       }
       
-      return true;
+      return false;
     } catch (error) {
       console.error('Error saving to database:', error);
       return false;
@@ -145,7 +217,21 @@ const NorskForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newErrors = validateForm(formData);
+    // Add validation for email field
+    const validationData = {
+      ...formData,
+      // Add any other fields needed for validation
+    };
+    
+    const newErrors = validateForm(validationData);
+    
+    // Email validation
+    if (!formData.email) {
+      newErrors.email = 'E-post er påkrevd';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Ugyldig e-postadresse';
+    }
+    
     setErrors(newErrors);
     
     if (Object.keys(newErrors).length === 0) {
@@ -154,33 +240,14 @@ const NorskForm: React.FC = () => {
       try {
         const success = await saveToDatabase();
         
-        if (success) {
-          toast({
-            title: 'Bestilling mottatt!',
-            description: 'Vi sender NordicMelatonin™ til deg innen 1-3 virkedager.',
-          });
-          
-          // Reset form after successful submission
-          setFormData({
-            fornavn: '',
-            etternavn: '',
-            telefon: '',
-            adresse: '',
-            postnummer: '',
-            poststed: '',
-            kommune: '',
-            kommuneId: '',
-            gate: '',
-            gateId: '',
-            husnummer: ''
-          });
-        } else {
+        if (!success) {
           toast({
             title: 'Noe gikk galt',
             description: 'Vi kunne ikke fullføre bestillingen din. Vennligst prøv igjen senere.',
             variant: 'destructive',
           });
         }
+        // No need to reset form or show success toast here as we're redirecting to Chargebee
       } catch (error) {
         console.error('Submission error:', error);
         toast({
@@ -188,7 +255,6 @@ const NorskForm: React.FC = () => {
           description: 'Det oppstod en feil ved behandling av skjemaet.',
           variant: 'destructive',
         });
-      } finally {
         setIsSubmitting(false);
       }
     }
@@ -213,13 +279,38 @@ const NorskForm: React.FC = () => {
             onInputChange={handleChange}
           />
           
+          {/* Email Field */}
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              E-post <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`w-full p-2 border rounded-md ${
+                errors.email ? 'border-red-500' : 'border-gray-300'
+              }`}
+              required
+            />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+            )}
+          </div>
+          
           <AddressSection 
             formData={formData}
             errors={errors}
             onAddressChange={handleFieldChange}
           />
           
-          <SubmitButton isSubmitting={isSubmitting} />
+          <SubmitButton 
+            isSubmitting={isSubmitting} 
+            text="Gå til betaling"
+            loadingText="Forbereder betaling..."
+          />
           
           <PrivacyNotice />
         </form>
