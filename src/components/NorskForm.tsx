@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import SubmitButton from './form/SubmitButton';
@@ -9,6 +8,7 @@ import PersonalInfoSection from './address/PersonalInfoSection';
 import AddressSection from './address/AddressSection';
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
+import { stripPhoneFormatting } from '@/utils/phoneUtils';
 
 interface FormData {
   fornavn: string;
@@ -77,16 +77,99 @@ const NorskForm: React.FC = () => {
     }
   };
 
+  const saveToDatabase = async () => {
+    try {
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Strip spaces from phone number before saving to database
+      const formattedPhoneNumber = stripPhoneFormatting(formData.telefon);
+      
+      let profileId: string;
+      
+      if (user) {
+        // User is authenticated - save profile to their account
+        const { data: profileData, error: profileError } = await supabase
+          .from('customer_profiles')
+          .upsert({
+            user_id: user.id,
+            fornavn: formData.fornavn,
+            etternavn: formData.etternavn,
+            telefon: formattedPhoneNumber,
+            adresse: formData.adresse,
+            postnummer: formData.postnummer,
+            poststed: formData.poststed,
+            kommune: formData.kommune,
+          }, { 
+            onConflict: 'user_id' 
+          })
+          .select();
+
+        if (profileError) throw profileError;
+        profileId = profileData?.[0]?.id || user.id;
+      } else {
+        // User is not authenticated - create guest profile
+        profileId = uuidv4();
+        
+        // Create customer profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('customer_profiles')
+          .insert({
+            id: profileId,
+            fornavn: formData.fornavn,
+            etternavn: formData.etternavn,
+            telefon: formattedPhoneNumber,
+            adresse: formData.adresse,
+            postnummer: formData.postnummer,
+            poststed: formData.poststed,
+            kommune: formData.kommune,
+          })
+          .select();
+        
+        if (profileError) throw profileError;
+      }
+      
+      // Create order linked to profile
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          customer_id: profileId,
+          product_name: 'NordicMelatonin™',
+          price: 299.00,
+          status: 'pending'
+        })
+        .select();
+      
+      if (orderError) throw orderError;
+      
+      // Proceed to Chargebee payment
+      if (orderData && orderData[0]) {
+        return await proceedToChargebee(orderData[0].id, {
+          id: profileId,
+          ...formData
+        });
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error saving to database:', error);
+      return false;
+    }
+  };
+
   const proceedToChargebee = async (orderId: string, profileData: any) => {
     try {
       setIsSubmitting(true);
+      
+      // Strip spaces from phone number before sending to Chargebee
+      const formattedPhoneNumber = stripPhoneFormatting(formData.telefon);
       
       // Customer data for Chargebee
       const customer = {
         first_name: formData.fornavn,
         last_name: formData.etternavn,
         email: formData.email,
-        phone: formData.telefon,
+        phone: formattedPhoneNumber,
         billing_address: {
           first_name: formData.fornavn,
           last_name: formData.etternavn,
@@ -94,7 +177,7 @@ const NorskForm: React.FC = () => {
           city: formData.poststed,
           zip: formData.postnummer,
           country: "NO",
-          phone: formData.telefon
+          phone: formattedPhoneNumber
         }
       };
       
@@ -133,83 +216,6 @@ const NorskForm: React.FC = () => {
         variant: 'destructive',
       });
       setIsSubmitting(false);
-      return false;
-    }
-  };
-
-  const saveToDatabase = async () => {
-    try {
-      // Check if user is authenticated
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      let profileId: string;
-      
-      if (user) {
-        // User is authenticated - save profile to their account
-        const { data: profileData, error: profileError } = await supabase
-          .from('customer_profiles')
-          .upsert({
-            user_id: user.id,
-            fornavn: formData.fornavn,
-            etternavn: formData.etternavn,
-            telefon: formData.telefon,
-            adresse: formData.adresse,
-            postnummer: formData.postnummer,
-            poststed: formData.poststed,
-            kommune: formData.kommune,
-          }, { 
-            onConflict: 'user_id' 
-          })
-          .select();
-
-        if (profileError) throw profileError;
-        profileId = profileData?.[0]?.id || user.id;
-      } else {
-        // User is not authenticated - create guest profile
-        profileId = uuidv4();
-        
-        // Create customer profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('customer_profiles')
-          .insert({
-            id: profileId,
-            fornavn: formData.fornavn,
-            etternavn: formData.etternavn,
-            telefon: formData.telefon,
-            adresse: formData.adresse,
-            postnummer: formData.postnummer,
-            poststed: formData.poststed,
-            kommune: formData.kommune,
-          })
-          .select();
-        
-        if (profileError) throw profileError;
-      }
-      
-      // Create order linked to profile
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_id: profileId,
-          product_name: 'NordicMelatonin™',
-          price: 299.00,
-          status: 'pending'
-        })
-        .select();
-      
-      if (orderError) throw orderError;
-      
-      // Proceed to Chargebee payment
-      if (orderData && orderData[0]) {
-        return await proceedToChargebee(orderData[0].id, {
-          id: profileId,
-          ...formData
-        });
-      }
-      
-      return false;
-    } catch (error) {
-      console.error('Error saving to database:', error);
       return false;
     }
   };

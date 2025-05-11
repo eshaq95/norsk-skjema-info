@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Phone Types
@@ -40,6 +39,14 @@ export function removeNorwegianCountryCode(phone: string): string {
   
   // Just return the 8 digits (or less if not complete)
   return normalized.slice(0, 8);
+}
+
+/**
+ * Removes all spaces and formatting characters from phone number
+ * Used for preparing phone number to be sent to the database
+ */
+export function stripPhoneFormatting(phone: string): string {
+  return phone.replace(/\s/g, '');
 }
 
 /**
