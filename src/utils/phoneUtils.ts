@@ -33,17 +33,17 @@ export function normalisePhone(phone: string): string {
 export function removeNorwegianCountryCode(phone: string): string {
   const normalized = normalisePhone(phone);
   
-  // Check for 0047 prefix
-  if (normalized.startsWith('0047') && normalized.length > 8) {
-    return normalized.substring(4);
+  // Check for 0047 prefix (handle this first since it's longer)
+  if (normalized.startsWith('0047') && normalized.length >= 12) {
+    return normalized.substring(4, 12);
   }
   
   // Check for 47 prefix
-  if (normalized.startsWith('47') && normalized.length > 8) {
-    return normalized.substring(2);
+  if (normalized.startsWith('47') && normalized.length >= 10) {
+    return normalized.substring(2, 10);
   }
   
-  // Just return the normalized number (up to 8 digits)
+  // Just return the first 8 digits of the normalized number
   return normalized.slice(0, 8);
 }
 
@@ -73,8 +73,8 @@ export function hasCountryCode(phone: string): boolean {
   const normalized = normalisePhone(phone);
   return phone.includes('+') || 
          phone.startsWith('00') || 
-         (normalized.startsWith('47') && normalized.length > 8) ||
-         (normalized.startsWith('0047') && normalized.length > 8);
+         (normalized.startsWith('47') && normalized.length >= 10) ||
+         (normalized.startsWith('0047') && normalized.length >= 12);
 }
 
 /**
@@ -84,13 +84,16 @@ export function hasCountryCode(phone: string): boolean {
 export function formatDisplayPhone(phone: string): string {
   const normalized = removeNorwegianCountryCode(phone);
   
+  // Ensure we only format if we have numbers to work with
+  if (!normalized || normalized.length === 0) return '';
+  
   // Group the digits in pairs for Norwegian formatting (XX XX XX XX)
   if (normalized.length <= 2) return normalized;
   if (normalized.length <= 4) return `${normalized.substring(0, 2)} ${normalized.substring(2)}`;
   if (normalized.length <= 6) return `${normalized.substring(0, 2)} ${normalized.substring(2, 4)} ${normalized.substring(4)}`;
-  if (normalized.length <= 8) return `${normalized.substring(0, 2)} ${normalized.substring(2, 4)} ${normalized.substring(4, 6)} ${normalized.substring(6, 8)}`;
   
-  return normalized;
+  // For 8 digits (full Norwegian number), format as XX XX XX XX
+  return `${normalized.substring(0, 2)} ${normalized.substring(2, 4)} ${normalized.substring(4, 6)} ${normalized.substring(6, 8)}`;
 }
 
 /**
