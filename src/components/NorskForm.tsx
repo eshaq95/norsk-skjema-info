@@ -22,7 +22,7 @@ interface FormData {
   gate: string;
   gateId: string;
   husnummer: string;
-  email: string; // Added email field for Chargebee
+  email: string;
 }
 
 interface FormErrors {
@@ -35,7 +35,7 @@ interface FormErrors {
   kommune?: string;
   gate?: string;
   husnummer?: string;
-  email?: string; // Added email error field
+  email?: string;
 }
 
 const NorskForm: React.FC = () => {
@@ -51,7 +51,7 @@ const NorskForm: React.FC = () => {
     gate: '',
     gateId: '',
     husnummer: '',
-    email: '', // Initialize email field
+    email: '',
   });
   
   const [errors, setErrors] = useState<FormErrors>({});
@@ -79,54 +79,30 @@ const NorskForm: React.FC = () => {
 
   const saveToDatabase = async () => {
     try {
-      // Check if user is authenticated
-      const { data: { user } } = await supabase.auth.getUser();
-      
       // Strip spaces from phone number before saving to database
       const formattedPhoneNumber = stripPhoneFormatting(formData.telefon);
       
-      let profileId: string;
+      // Generate a unique ID for guest profile
+      const profileId = uuidv4();
       
-      if (user) {
-        // User is authenticated - save profile to their account
-        const { data: profileData, error: profileError } = await supabase
-          .from('customer_profiles')
-          .upsert({
-            user_id: user.id,
-            fornavn: formData.fornavn,
-            etternavn: formData.etternavn,
-            telefon: formattedPhoneNumber,
-            adresse: formData.adresse,
-            postnummer: formData.postnummer,
-            poststed: formData.poststed,
-            kommune: formData.kommune,
-          }, { 
-            onConflict: 'user_id' 
-          })
-          .select();
-
-        if (profileError) throw profileError;
-        profileId = profileData?.[0]?.id || user.id;
-      } else {
-        // User is not authenticated - create guest profile
-        profileId = uuidv4();
-        
-        // Create customer profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('customer_profiles')
-          .insert({
-            id: profileId,
-            fornavn: formData.fornavn,
-            etternavn: formData.etternavn,
-            telefon: formattedPhoneNumber,
-            adresse: formData.adresse,
-            postnummer: formData.postnummer,
-            poststed: formData.poststed,
-            kommune: formData.kommune,
-          })
-          .select();
-        
-        if (profileError) throw profileError;
+      // Create customer profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('customer_profiles')
+        .insert({
+          id: profileId,
+          fornavn: formData.fornavn,
+          etternavn: formData.etternavn,
+          telefon: formattedPhoneNumber,
+          adresse: formData.adresse,
+          postnummer: formData.postnummer,
+          poststed: formData.poststed,
+          kommune: formData.kommune,
+        })
+        .select();
+      
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        throw profileError;
       }
       
       // Create order linked to profile
@@ -140,7 +116,10 @@ const NorskForm: React.FC = () => {
         })
         .select();
       
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('Error creating order:', orderError);
+        throw orderError;
+      }
       
       // Proceed to Chargebee payment
       if (orderData && orderData[0]) {

@@ -31,3 +31,6 @@ verify_jwt = true
 
 [functions.chargebee-webhook]
 verify_jwt = false # webhook needs to be public
+
+[functions.phone-lookup]
+verify_jwt = false
