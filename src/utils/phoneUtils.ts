@@ -27,18 +27,18 @@ export function normalisePhone(phone: string): string {
 }
 
 /**
- * Removes Norwegian country code prefixes (+47, 0047) if present
+ * Intelligently removes Norwegian country code prefixes (+47, 0047) if present
  * Returns only the 8-digit phone number
  */
 export function removeNorwegianCountryCode(phone: string): string {
   const normalized = normalisePhone(phone);
   
-  // Remove +47 or 0047 prefix
+  // Remove +47/0047 prefix if present (handles both cases when the complete phone number is 10+ digits)
   if (normalized.startsWith('47') && normalized.length > 8) {
     return normalized.substring(2);
   }
   
-  // Just return the 8 digits (or less if not complete)
+  // Just return the normalized number (up to 8 digits)
   return normalized.slice(0, 8);
 }
 
@@ -51,14 +51,14 @@ export function stripPhoneFormatting(phone: string): string {
 }
 
 /**
- * Validates if a phone number is a valid Norwegian number.
- * Norwegian numbers must be exactly 8 digits with no country code.
+ * Validates if a phone number is a valid Norwegian number after normalization.
+ * Automatically strips country codes and validates the remaining digits.
  */
 export function isValidNorwegian(phone: string): boolean {
-  const normalized = normalisePhone(phone);
+  const withoutCountryCode = removeNorwegianCountryCode(phone);
   
-  // Phone must be exactly 8 digits
-  return normalized.length === 8;
+  // Phone must be exactly 8 digits after country code removal
+  return withoutCountryCode.length === 8;
 }
 
 /**
@@ -67,15 +67,17 @@ export function isValidNorwegian(phone: string): boolean {
 export function hasCountryCode(phone: string): boolean {
   return phone.includes('+') || 
          phone.startsWith('00') || 
-         (normalisePhone(phone).length > 8);
+         (normalisePhone(phone).startsWith('47') && normalisePhone(phone).length > 8);
 }
 
 /**
  * Formats a phone number for display with proper Norwegian spacing (XX XX XX XX)
+ * Automatically handles country codes if present
  */
 export function formatDisplayPhone(phone: string): string {
   const normalized = removeNorwegianCountryCode(phone);
   
+  // Group the digits in pairs for Norwegian formatting
   if (normalized.length <= 2) return normalized;
   if (normalized.length <= 4) return `${normalized.substring(0, 2)} ${normalized.substring(2)}`;
   if (normalized.length <= 6) return `${normalized.substring(0, 2)} ${normalized.substring(2, 4)} ${normalized.substring(4)}`;
@@ -88,8 +90,8 @@ export function formatDisplayPhone(phone: string): string {
  * For the services.api1881.no endpoint, returns just the digits without country code
  */
 export function format1881PhoneNumber(phone: string): string {
-  // Remove all non-digit characters
-  return phone.replace(/\D/g, '');
+  // Remove all non-digit characters and country code
+  return removeNorwegianCountryCode(phone);
 }
 
 /**

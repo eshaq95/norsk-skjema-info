@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,11 +29,12 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   const [phoneOwner, setPhoneOwner] = useState<PhoneOwner | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const [hasCountryCodePrefix, setHasCountryCodePrefix] = useState(false);
 
   // Handle phone input formatting
   const handlePhoneInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formattedValue = formatPhoneNumber(e.target.value);
-    onChange(formattedValue);
+    // Just store raw input in state - we'll format on blur
+    onChange(e.target.value);
     
     // Clear validation errors when user is typing
     if (validationError) {
@@ -45,14 +47,29 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       setPhoneOwner(null);
     }
     
-    // Live validation
-    const normalized = removeNorwegianCountryCode(e.target.value);
-    if (normalized.length > 0) {
-      // Check if normalized is exactly 8 digits after country code removal
-      if (normalized.length > 8) {
-        setValidationError('Telefonnummer må være 8 siffer');
-      }
+    // Check for country code to show visual feedback
+    setHasCountryCodePrefix(hasCountryCode(e.target.value));
+  };
+
+  // Format the phone number and perform validation on blur
+  const handleBlur = () => {
+    setIsFocused(false);
+    
+    if (!value || value.trim() === '') return;
+    
+    // Format the phone number with proper spacing
+    const formattedValue = formatPhoneNumber(value);
+    onChange(formattedValue);
+    
+    // Validate the phone number
+    if (!isValidNorwegian(value)) {
+      setValidationError('Telefonnummer må være 8 siffer');
+      setLookupStatus('error');
+      return;
     }
+    
+    // If we have a valid phone number, lookup the owner information
+    debouncedLookup(formattedValue);
   };
 
   // Perform phone lookup with debounce - only triggered on blur
@@ -65,16 +82,8 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
         return;
       }
       
-      const normalized = normalisePhone(phone);
+      const normalized = removeNorwegianCountryCode(phone);
       setNormalizedPhone(normalized);
-      
-      // Validate phone number format
-      if (hasCountryCode(phone)) {
-        setValidationError('Kun 8 siffer uten landskode (+47/0047)');
-        setLookupStatus('error');
-        setPhoneOwner(null);
-        return;
-      }
       
       // Don't lookup until we have 8 digits
       if (normalized.length !== 8) {
@@ -116,22 +125,6 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     []
   );
 
-  // Trigger lookup ONLY when focus is lost and we have valid input
-  const handleBlur = () => {
-    setIsFocused(false);
-    if (value && value.trim()) {
-      const normalized = removeNorwegianCountryCode(value);
-      
-      // Only attempt lookup if we have exactly 8 digits after country code removal
-      if (normalized.length === 8) {
-        debouncedLookup(normalized);
-      } else {
-        setValidationError('Telefonnummer må være 8 siffer');
-        setLookupStatus('error');
-      }
-    }
-  };
-
   // Get status icon based on lookup status
   const getStatusIcon = () => {
     switch (lookupStatus) {
@@ -169,7 +162,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={handleBlur}
           className={`pr-8 ${fieldHasError ? 'ring-2 ring-destructive' : ''}`}
-          placeholder="Skriv inn 8 siffer uten landskode"
+          placeholder="Skriv inn 8 siffer, med eller uten +47"
         />
         {value && value.length > 0 && (
           <div className="absolute inset-y-0 right-3 flex items-center">
@@ -177,6 +170,13 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           </div>
         )}
       </div>
+      
+      {/* Show when input has country code that will be automatically removed */}
+      {hasCountryCodePrefix && isFocused && !fieldHasError && (
+        <p className="text-xs text-green-600">
+          +47 landkode fjernes automatisk ved validering
+        </p>
+      )}
       
       {fieldHasError && displayError && (
         <p className="text-sm font-medium text-destructive">{displayError}</p>
