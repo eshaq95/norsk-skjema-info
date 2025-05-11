@@ -71,6 +71,19 @@ export function hasCountryCode(phone: string): boolean {
 }
 
 /**
+ * Formats a phone number for display with proper Norwegian spacing (XX XX XX XX)
+ */
+export function formatDisplayPhone(phone: string): string {
+  const normalized = removeNorwegianCountryCode(phone);
+  
+  if (normalized.length <= 2) return normalized;
+  if (normalized.length <= 4) return `${normalized.substring(0, 2)} ${normalized.substring(2)}`;
+  if (normalized.length <= 6) return `${normalized.substring(0, 2)} ${normalized.substring(2, 4)} ${normalized.substring(4)}`;
+  
+  return `${normalized.substring(0, 2)} ${normalized.substring(2, 4)} ${normalized.substring(4, 6)} ${normalized.substring(6, 8)}`;
+}
+
+/**
  * Formats a phone number for the 1881 API
  * For the services.api1881.no endpoint, returns just the digits without country code
  */
@@ -96,13 +109,13 @@ export async function lookup1881(phone: string): Promise<PhoneLookupResult> {
     });
     
     if (error) {
-      console.error('Error calling phone-lookup function:', error);
+      console.log('Error calling phone-lookup function:', error);
       // Return an empty result rather than throwing, to prevent UI errors
       return { content: [], hasMore: false, _fallback: true, _message: error.message };
     }
     
     if (!data) {
-      console.error('No data returned from phone-lookup function');
+      console.log('No data returned from phone-lookup function');
       // Return an empty result rather than throwing
       return { content: [], hasMore: false, _fallback: true, _message: 'No data returned' };
     }
