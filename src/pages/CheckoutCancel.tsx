@@ -34,11 +34,6 @@ const CheckoutCancel: React.FC = () => {
             </div>
           </CardContent>
         </Card>
-        
-        <footer className="mt-8 text-center text-sm text-gray-500">
-          <p className="mb-2">© 2025 Nordics Choice AS - Et heleid selskap av Nordic Nutrition Group AS</p>
-          <p>Uranienborg terrasse 9, 0351 Oslo | Tlf: +47 22 69 00 00 | E-post: hei@nordicschoice.com</p>
-        </footer>
       </div>
     </div>
   );
