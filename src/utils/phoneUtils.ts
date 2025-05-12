@@ -37,11 +37,7 @@ export function removeNorwegianCountryCode(phone: string): string {
     return normalized.substring(4, 12);
   }
   
-  // Check for 47 prefix
-  if (normalized.startsWith('47') && normalized.length >= 10) {
-    return normalized.substring(2, 10);
-  }
-  
+
   // Just return the first 8 digits of the normalized number
   return normalized.slice(0, 8);
 }
