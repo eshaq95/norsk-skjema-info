@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +56,26 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     setIsFocused(false);
     
     if (!value || value.trim() === '') return;
+    
+    // Check if the phone number is too long
+    const normalized = normalisePhone(value);
+    if (normalized.startsWith('47') && normalized.length > 10) {
+      setValidationError('Telefonnummer er for langt (maks 8 siffer + eventuell landkode)');
+      setLookupStatus('error');
+      return;
+    }
+    
+    if (normalized.startsWith('0047') && normalized.length > 12) {
+      setValidationError('Telefonnummer er for langt (maks 8 siffer + eventuell landkode)');
+      setLookupStatus('error');
+      return;
+    }
+    
+    if (!normalized.startsWith('47') && !normalized.startsWith('0047') && normalized.length > 8) {
+      setValidationError('Telefonnummer er for langt (maks 8 siffer)');
+      setLookupStatus('error');
+      return;
+    }
     
     // Format the phone number with proper spacing
     const formattedValue = formatDisplayPhone(value);
@@ -161,7 +182,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={handleBlur}
           className={`pr-8 ${fieldHasError ? 'ring-2 ring-destructive' : ''}`}
-          placeholder="Skriv inn 8 siffer, med eller uten +47"
+          placeholder="8 siffer, med eller uten +47"
         />
         {value && value.length > 0 && (
           <div className="absolute inset-y-0 right-3 flex items-center">

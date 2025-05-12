@@ -133,7 +133,7 @@ const MunicipalityInput: React.FC<MunicipalityInputProps> = ({ onMunicipalitySel
           value={inputValue}
           onChange={handleInputChange}
           className="w-full"
-          placeholder="Skriv inn kommune (minst 2 bokstaver)"
+          placeholder="Skriv inn kommune"
           onClick={handleInputClick}
           onFocus={() => inputValue.length >= 2 && setIsOpen(true)}
           onBlur={handleBlur}

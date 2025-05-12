@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 // Phone Types
@@ -58,9 +57,26 @@ export function stripPhoneFormatting(phone: string): string {
 /**
  * Validates if a phone number is a valid Norwegian number after normalization.
  * Automatically strips country codes and validates the remaining digits.
+ * Also checks if the phone number is too long (after country code removal).
  */
 export function isValidNorwegian(phone: string): boolean {
+  const normalized = normalisePhone(phone);
   const withoutCountryCode = removeNorwegianCountryCode(phone);
+  
+  // Check if the original normalized number is too long
+  // (after removing country code, there should be exactly 8 digits)
+  if (normalized.startsWith('47') && normalized.length > 10) {
+    return false;
+  }
+  
+  if (normalized.startsWith('0047') && normalized.length > 12) {
+    return false;
+  }
+  
+  // For numbers without country code, check if they're too long
+  if (!normalized.startsWith('47') && !normalized.startsWith('0047') && normalized.length > 8) {
+    return false;
+  }
   
   // Phone must be exactly 8 digits after country code removal
   return withoutCountryCode.length === 8;
@@ -69,7 +85,7 @@ export function isValidNorwegian(phone: string): boolean {
 /**
  * Check if the phone has country code prefixes like +47 or 0047
  */
-export function hasCountryCode(phone: string): boolean {
+export function hasCountryCode(phone: string): string {
   const normalized = normalisePhone(phone);
   return phone.includes('+') || 
          phone.startsWith('00') || 

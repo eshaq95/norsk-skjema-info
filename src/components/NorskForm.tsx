@@ -9,6 +9,8 @@ import AddressSection from './address/AddressSection';
 import { supabase } from "@/integrations/supabase/client";
 import { v4 as uuidv4 } from 'uuid';
 import { stripPhoneFormatting } from '@/utils/phoneUtils';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface FormData {
   fornavn: string;
@@ -264,24 +266,25 @@ const NorskForm: React.FC = () => {
             onInputChange={handleChange}
           />
           
-          {/* Email Field */}
+          {/* Email Field with improved placeholder */}
           <div className="mb-4">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <Label htmlFor="email" className="font-medium">
               E-post <span className="text-red-500">*</span>
-            </label>
-            <input
+            </Label>
+            <Input
               type="email"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className={`w-full p-2 border rounded-md ${
-                errors.email ? 'border-red-500' : 'border-gray-300'
+              className={`w-full ${
+                errors.email ? 'ring-2 ring-destructive' : ''
               }`}
+              placeholder="din.epost@example.com"
               required
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+              <p className="mt-1 text-sm font-medium text-destructive">{errors.email}</p>
             )}
           </div>
           
