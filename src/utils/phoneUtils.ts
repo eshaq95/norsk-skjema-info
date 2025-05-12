@@ -83,7 +83,6 @@ export function hasCountryCode(phone: string): boolean {
   const normalized = normalisePhone(phone);
   return phone.includes('+') || 
          phone.startsWith('00') || 
-         (normalized.startsWith('47') && normalized.length >= 10) ||
          (normalized.startsWith('0047') && normalized.length >= 12);
 }
 
