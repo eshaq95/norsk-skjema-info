@@ -205,10 +205,13 @@ const NorskForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Add validation for email field
+    // Add validation for all required fields
     const validationData = {
       ...formData,
-      // Add any other fields needed for validation
+      // Ensure all fields are included in validation
+      kommune: formData.kommune,
+      gate: formData.gate,
+      husnummer: formData.husnummer
     };
     
     const newErrors = validateForm(validationData);
@@ -237,6 +240,14 @@ const NorskForm: React.FC = () => {
           variant: 'destructive',
         });
         setIsSubmitting(false);
+      }
+    } else {
+      // Scroll to the first error
+      const firstErrorField = Object.keys(newErrors)[0];
+      const errorElement = document.getElementById(firstErrorField);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        errorElement.focus();
       }
     }
   };

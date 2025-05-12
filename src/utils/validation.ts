@@ -76,6 +76,21 @@ export const validateForm = (formData: FormData): FormErrors => {
     errors.poststed = 'Poststed er påkrevd';
   }
   
+  // Validate kommune
+  if (formData.kommune !== undefined && !formData.kommune?.trim()) {
+    errors.kommune = 'Kommune er påkrevd';
+  }
+  
+  // Validate gate
+  if (formData.gate !== undefined && !formData.gate?.trim()) {
+    errors.gate = 'Gate er påkrevd';
+  }
+  
+  // Validate husnummer
+  if (formData.husnummer !== undefined && !formData.husnummer?.trim()) {
+    errors.husnummer = 'Husnummer er påkrevd';
+  }
+  
   return errors;
 };
 
