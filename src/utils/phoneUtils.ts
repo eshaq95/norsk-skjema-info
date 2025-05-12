@@ -61,16 +61,14 @@ export function isValidNorwegian(phone: string): boolean {
   
   // Check if the original normalized number is too long
   // (after removing country code, there should be exactly 8 digits)
-  if (normalized.startsWith('47') && normalized.length > 10) {
-    return false;
-  }
+
   
   if (normalized.startsWith('0047') && normalized.length > 12) {
     return false;
   }
   
   // For numbers without country code, check if they're too long
-  if (!normalized.startsWith('47') && !normalized.startsWith('0047') && normalized.length > 8) {
+  if (!normalized.startsWith('0047') && normalized.length > 8) {
     return false;
   }
   
