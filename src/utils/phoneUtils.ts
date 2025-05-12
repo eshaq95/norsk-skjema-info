@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 // Phone Types
@@ -37,8 +38,8 @@ export function removeNorwegianCountryCode(phone: string): string {
     return normalized.substring(4, 12);
   }
   
-  // Check for 47 prefix
-  if (normalized.startsWith('47') && normalized.length >= 10) {
+  // Check for +47 prefix by looking for plus sign in original input
+  if (phone.includes('+') && normalized.startsWith('47') && normalized.length >= 10) {
     return normalized.substring(2, 10);
   }
   
@@ -61,22 +62,27 @@ export function stripPhoneFormatting(phone: string): string {
  */
 export function isValidNorwegian(phone: string): boolean {
   const normalized = normalisePhone(phone);
-  const withoutCountryCode = removeNorwegianCountryCode(phone);
+  
+  // Check for valid country code prefixes
+  const hasPlus47 = phone.includes('+') && normalized.startsWith('47');
+  const has0047 = normalized.startsWith('0047');
   
   // Check if the original normalized number is too long
-  // (after removing country code, there should be exactly 8 digits)
-  if (normalized.startsWith('47') && normalized.length > 10) {
+  if (hasPlus47 && normalized.length > 10) {
     return false;
   }
   
-  if (normalized.startsWith('0047') && normalized.length > 12) {
+  if (has0047 && normalized.length > 12) {
     return false;
   }
   
   // For numbers without country code, check if they're too long
-  if (!normalized.startsWith('47') && !normalized.startsWith('0047') && normalized.length > 8) {
+  if (!hasPlus47 && !has0047 && normalized.length > 8) {
     return false;
   }
+  
+  // Get the number without country code
+  const withoutCountryCode = removeNorwegianCountryCode(phone);
   
   // Phone must be exactly 8 digits after country code removal
   return withoutCountryCode.length === 8;
@@ -87,10 +93,8 @@ export function isValidNorwegian(phone: string): boolean {
  */
 export function hasCountryCode(phone: string): boolean {
   const normalized = normalisePhone(phone);
-  return phone.includes('+') || 
-         phone.startsWith('00') || 
-         (normalized.startsWith('47') && normalized.length >= 10) ||
-         (normalized.startsWith('0047') && normalized.length >= 12);
+  return phone.includes('+') && normalized.startsWith('47') || 
+         normalized.startsWith('0047');
 }
 
 /**

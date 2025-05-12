@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,29 +56,30 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     
     if (!value || value.trim() === '') return;
     
-    // Check if the phone number is too long
+    // Check if the phone number is valid
     const normalized = normalisePhone(value);
-    if (normalized.startsWith('47') && normalized.length > 10) {
+    const hasPlus47 = value.includes('+') && normalized.startsWith('47');
+    const has0047 = normalized.startsWith('0047');
+    
+    // Check for length issues
+    if (hasPlus47 && normalized.length > 10) {
       setValidationError('Telefonnummer er for langt (maks 8 siffer + eventuell landkode)');
       setLookupStatus('error');
       return;
     }
     
-    if (normalized.startsWith('0047') && normalized.length > 12) {
+    if (has0047 && normalized.length > 12) {
       setValidationError('Telefonnummer er for langt (maks 8 siffer + eventuell landkode)');
       setLookupStatus('error');
       return;
     }
 
-
-    if (!normalized.startsWith('47') && !normalized.startsWith('0047') && normalized.length > 8) {
+    if (!hasPlus47 && !has0047 && normalized.length > 8) {
       setValidationError('Telefonnummer er for langt (maks 8 siffer)');
       setLookupStatus('error');
       return;
     }
-    
 
-    
     // Format the phone number with proper spacing
     const formattedValue = formatDisplayPhone(value);
     onChange(formattedValue);
