@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import { fetchStreets, Street } from '@/hooks/useAddressLookup';
@@ -158,7 +157,7 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
           onChange={handleInputChange}
           className="w-full"
           disabled={disabled}
-          placeholder={disabled ? "Velg kommune først" : "Skriv inn gatenavn (minst 2 bokstaver)"}
+          placeholder={disabled ? "Velg kommune først" : "Skriv inn gatenavn"}
           onClick={handleInputClick}
           onFocus={() => inputValue.length >= 2 && !disabled && setIsOpen(true)}
           onBlur={handleBlur}
