@@ -193,8 +193,8 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       
       {/* Show when input has country code that will be automatically removed */}
       {hasCountryCodePrefix && isFocused && !fieldHasError && (
-        <p className="text-xs text-green-600">
-          +47/0047 landkode fjernes automatisk ved validering
+        <p className="text-sm text-gray-500">
+          +47/0047 fjernes automatisk ved validering
         </p>
       )}
       
