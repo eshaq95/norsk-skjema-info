@@ -266,7 +266,7 @@ const NorskForm: React.FC = () => {
           {/* Email Field with improved placeholder */}
           <div className="mb-4">
             <Label htmlFor="email" className="font-medium">
-              E-post <span className="text-red-500">*</span>
+              E-post
             </Label>
             <Input
               type="email"
