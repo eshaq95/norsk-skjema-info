@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import SubmitButton from './form/SubmitButton';
 import PrivacyNotice from './form/PrivacyNotice';
-import { validateForm } from '@/utils/validation';
+import { validateForm, validateEmail } from '@/utils/validation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import PersonalInfoSection from './address/PersonalInfoSection';
 import AddressSection from './address/AddressSection';
@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { stripPhoneFormatting } from '@/utils/phoneUtils';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import FormInput from './form/FormInput';
 
 interface FormData {
   fornavn: string;
@@ -212,13 +213,6 @@ const NorskForm: React.FC = () => {
     
     const newErrors = validateForm(validationData);
     
-    // Email validation
-    if (!formData.email) {
-      newErrors.email = 'E-post er påkrevd';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Ugyldig e-postadresse';
-    }
-    
     setErrors(newErrors);
     
     if (Object.keys(newErrors).length === 0) {
@@ -247,6 +241,36 @@ const NorskForm: React.FC = () => {
     }
   };
 
+  // Email validation helper function for real-time validation
+  const validateEmailField = (email: string) => {
+    if (!email) {
+      return 'E-post er påkrevd';
+    }
+    if (!validateEmail(email)) {
+      return 'Ugyldig e-postformat. Vennligst oppgi en gyldig e-postadresse';
+    }
+    return undefined;
+  };
+
+  // Handle email change with real-time validation
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setFormData(prev => ({ ...prev, email: value }));
+    
+    // Clear error when starting to type
+    if (errors.email) {
+      setErrors(prev => ({ ...prev, email: undefined }));
+    }
+  };
+
+  // Handle email blur for validation
+  const handleEmailBlur = () => {
+    const emailError = validateEmailField(formData.email);
+    if (emailError) {
+      setErrors(prev => ({ ...prev, email: emailError }));
+    }
+  };
+
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-md border-t-4 border-t-norsk-blue">
       <CardHeader className="bg-gradient-to-r from-white to-norsk-gray/30">
@@ -263,27 +287,19 @@ const NorskForm: React.FC = () => {
             onInputChange={handleChange}
           />
           
-          {/* Email Field with improved placeholder */}
-          <div className="mb-4">
-            <Label htmlFor="email" className="font-medium">
-              E-post
-            </Label>
-            <Input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={`w-full ${
-                errors.email ? 'ring-2 ring-destructive' : ''
-              }`}
-              placeholder="din.epost@example.com"
-              required
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm font-medium text-destructive">{errors.email}</p>
-            )}
-          </div>
+          {/* Email Field with improved validation feedback */}
+          <FormInput
+            id="email"
+            label="E-post"
+            type="email"
+            value={formData.email}
+            onChange={handleEmailChange}
+            onBlur={handleEmailBlur}
+            hasError={!!errors.email}
+            errorMessage={errors.email}
+            placeholder="din.epost@example.com"
+            description="Vi sender ordrebekreftelse og sporingsinformasjon til denne adressen."
+          />
           
           <AddressSection 
             formData={formData}

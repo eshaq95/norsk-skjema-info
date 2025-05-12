@@ -1,3 +1,4 @@
+
 import { normalisePhone, isValidNorwegian, hasCountryCode, removeNorwegianCountryCode, formatDisplayPhone } from './phoneUtils';
 
 interface FormData {
@@ -49,12 +50,12 @@ export const validateForm = (formData: FormData): FormErrors => {
     }
   }
   
-  // Validate email if present in formData
+  // Enhanced email validation with more specific error messages
   if (formData.email !== undefined) {
     if (!formData.email.trim()) {
       errors.email = 'E-post er påkrevd';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Ugyldig e-postadresse';
+    } else if (!validateEmail(formData.email)) {
+      errors.email = 'Ugyldig e-postformat. Vennligst oppgi en gyldig e-postadresse';
     }
   }
   
@@ -76,6 +77,18 @@ export const validateForm = (formData: FormData): FormErrors => {
   }
   
   return errors;
+};
+
+// Improved email validation function with a more comprehensive regex
+export const validateEmail = (email: string): boolean => {
+  // This regex checks for a more complete email validation pattern
+  // It requires:
+  // - At least one character before the @
+  // - At least one character after the @ and before the dot
+  // - At least two characters after the dot (TLD)
+  // - No special characters in wrong positions
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+  return emailRegex.test(email);
 };
 
 export const formatPhoneNumber = (value: string): string => {
