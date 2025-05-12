@@ -1,4 +1,3 @@
-
 import { normalisePhone, isValidNorwegian, hasCountryCode, removeNorwegianCountryCode, formatDisplayPhone } from './phoneUtils';
 
 interface FormData {
@@ -11,7 +10,7 @@ interface FormData {
   kommune?: string;
   gate?: string;
   husnummer?: string;
-  email?: string; // Added email field
+  email?: string;
 }
 
 interface FormErrors {
@@ -24,7 +23,7 @@ interface FormErrors {
   kommune?: string;
   gate?: string;
   husnummer?: string;
-  email?: string; // Added email error field
+  email?: string;
 }
 
 export const validateForm = (formData: FormData): FormErrors => {
