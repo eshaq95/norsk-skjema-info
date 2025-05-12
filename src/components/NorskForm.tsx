@@ -253,9 +253,6 @@ const NorskForm: React.FC = () => {
         <CardTitle className="text-2xl font-bold text-norsk-blue text-center">
           Bestill NordicMelatonin™
         </CardTitle>
-        <CardDescription className="text-center">
-          Vi sender på 1-3 virkedager. Ingen bindingstid og ingen skjulte kostnader.
-        </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} noValidate>
@@ -269,7 +266,7 @@ const NorskForm: React.FC = () => {
           {/* Email Field with improved placeholder */}
           <div className="mb-4">
             <Label htmlFor="email" className="font-medium">
-              E-post
+              E-post <span className="text-red-500">*</span>
             </Label>
             <Input
               type="email"
