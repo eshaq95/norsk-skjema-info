@@ -157,7 +157,7 @@ const StreetInput: React.FC<StreetInputProps> = ({ municipalityId, onStreetSelec
           onChange={handleInputChange}
           className="w-full"
           disabled={disabled}
-          placeholder={disabled ? "Velg kommune først" : "Skriv inn gatenavn"}
+          placeholder={disabled ? "Velg kommune først" : "Skriv inn gate/stedsnavn"}
           onClick={handleInputClick}
           onFocus={() => inputValue.length >= 2 && !disabled && setIsOpen(true)}
           onBlur={handleBlur}
