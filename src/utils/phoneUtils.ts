@@ -85,7 +85,7 @@ export function isValidNorwegian(phone: string): boolean {
 /**
  * Check if the phone has country code prefixes like +47 or 0047
  */
-export function hasCountryCode(phone: string): string {
+export function hasCountryCode(phone: string): boolean {
   const normalized = normalisePhone(phone);
   return phone.includes('+') || 
          phone.startsWith('00') || 
