@@ -71,11 +71,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       return;
     }
     
-    if (!normalized.startsWith('47') && !normalized.startsWith('0047') && normalized.length > 8) {
-      setValidationError('Telefonnummer er for langt (maks 8 siffer)');
-      setLookupStatus('error');
-      return;
-    }
+
     
     // Format the phone number with proper spacing
     const formattedValue = formatDisplayPhone(value);
