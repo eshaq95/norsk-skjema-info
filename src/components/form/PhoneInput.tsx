@@ -70,6 +70,13 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       setLookupStatus('error');
       return;
     }
+
+
+    if (!normalized.startsWith('47') && !normalized.startsWith('0047') && normalized.length > 8) {
+      setValidationError('Telefonnummer er for langt (maks 8 siffer)');
+      setLookupStatus('error');
+      return;
+    }
     
 
     
