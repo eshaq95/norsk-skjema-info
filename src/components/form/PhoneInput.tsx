@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatPhoneNumber } from '@/utils/validation';
@@ -30,78 +29,11 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [hasCountryCodePrefix, setHasCountryCodePrefix] = useState(false);
-  
-  // Reference for input element to manage cursor position
-  const inputRef = useRef<HTMLInputElement>(null);
-  const cursorPositionRef = useRef<number | null>(null);
 
-  // Format the phone number with debounce as user types
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedFormatting = useCallback(
-    debounce((text: string, cursorPosition: number) => {
-      if (text && text.trim() !== '') {
-        // Only format if there's content to format
-        // Check if the phone number has a valid structure before formatting
-        const formattedValue = formatDisplayPhone(text);
-        
-        // Store cursor position after formatting
-        const newCursorPosition = calculateCursorPositionAfterFormat(text, formattedValue, cursorPosition);
-        cursorPositionRef.current = newCursorPosition;
-        
-        onChange(formattedValue);
-      }
-    }, 400), // 400ms debounce delay as suggested
-    []
-  );
-
-  // Calculate cursor position after formatting
-  const calculateCursorPositionAfterFormat = (
-    originalValue: string, 
-    formattedValue: string, 
-    cursorPosition: number
-  ): number => {
-    // Count how many spaces are before the cursor in the formatted value
-    const originalBeforeCursor = originalValue.slice(0, cursorPosition);
-    const originalDigitsBeforeCursor = originalBeforeCursor.replace(/\D/g, '').length;
-    
-    // Find where these digits end in the formatted string
-    let spacesAdded = 0;
-    let newPosition = 0;
-    
-    // Count digits in formatted value until we reach the original count
-    let digitsCounted = 0;
-    for (let i = 0; i < formattedValue.length; i++) {
-      if (/\d/.test(formattedValue[i])) {
-        digitsCounted++;
-      }
-      
-      if (digitsCounted > originalDigitsBeforeCursor) {
-        break;
-      }
-      
-      newPosition = i + 1;
-    }
-    
-    return newPosition;
-  };
-
-  // Apply cursor position after value update
-  useEffect(() => {
-    if (inputRef.current && cursorPositionRef.current !== null && isFocused) {
-      inputRef.current.setSelectionRange(cursorPositionRef.current, cursorPositionRef.current);
-    }
-  }, [value, isFocused]);
-
-  // Handle phone input with live formatting
+  // Handle phone input formatting
   const handlePhoneInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const inputValue = e.target.value;
-    const cursorPosition = e.target.selectionStart || 0;
-    
-    // Store raw value immediately for a responsive feel
-    onChange(inputValue);
-    
-    // Store cursor position for restoration
-    cursorPositionRef.current = cursorPosition;
+    // Just store raw input in state - we'll format on blur
+    onChange(e.target.value);
     
     // Clear validation errors when user is typing
     if (validationError) {
@@ -115,10 +47,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     }
     
     // Check for country code to show visual feedback
-    setHasCountryCodePrefix(hasCountryCode(inputValue));
-    
-    // Trigger debounced formatting
-    debouncedFormatting(inputValue, cursorPosition);
+    setHasCountryCodePrefix(hasCountryCode(e.target.value));
   };
 
   // Format the phone number and perform validation on blur
@@ -248,7 +177,6 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       <Label htmlFor="telefon" className="font-medium">Telefonnummer</Label>
       <div className="relative">
         <Input
-          ref={inputRef}
           id="telefon"
           name="telefon"
           type="tel"

@@ -1,4 +1,3 @@
-
 import { normalisePhone, isValidNorwegian, hasCountryCode, removeNorwegianCountryCode, formatDisplayPhone } from './phoneUtils';
 
 interface FormData {
@@ -106,7 +105,6 @@ export const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-// Updated to support real-time formatting with cursor position preservation
 export const formatPhoneNumber = (value: string): string => {
   // Format the phone number as user types (for Norwegian numbers)
   if (!value) return '';
