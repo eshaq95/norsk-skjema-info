@@ -5,7 +5,7 @@ import { formatPhoneNumber } from '@/utils/validation';
 import { normalisePhone, isValidNorwegian, hasCountryCode, lookup1881, PhoneLookupResult, PhoneOwner, removeNorwegianCountryCode, formatDisplayPhone } from '@/utils/phoneUtils';
 import { Loader2, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { debounce } from 'lodash';
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 interface PhoneInputProps {
   value: string;
