@@ -9,6 +9,7 @@ This application provides a user-friendly form interface for collecting Norwegia
 
 - **Municipality, Street, and House Number Selection**: Step-by-step guided address entry
 - **Real-time Address Validation**: Ensures addresses exist in Norway's address database
+- **Phone Number Validation & Lookup**: Verifies phone numbers and retrieves owner information
 - **Responsive Design**: Works well on all device sizes
 - **Form Validation**: Provides immediate feedback on required fields
 - **Error Handling**: User-friendly error messages for API errors or network issues
@@ -22,12 +23,31 @@ This project is built with:
 - **React**: For building the user interface components
 - **Shadcn UI**: For consistent, accessible UI components
 - **Tailwind CSS**: For responsive design and styling
+- **Supabase**: For backend database and edge functions
 
 ## API Integrations
 
-This application integrates with:
-- **Norwegian Address API**: For municipality, street, and house number lookups
-- **Google Places API**: (Optional) For alternative address input with autocomplete
+This application integrates with several external APIs:
+
+### Norwegian Address APIs:
+- **Geonorge API** (https://ws.geonorge.no):
+  - `/kommuneinfo/v1/kommuner` - For municipality lookup
+  - `/adresser/v1/sok` - For street search
+  - `/adresser/v1/adresser` - For house number lookup
+
+### Postal Code Validation:
+- **Bring API** (https://api.bring.com/shippingguide/api/postalCode.json):
+  - Used to validate Norwegian postal codes and retrieve city names
+
+### Phone Number Lookup:
+- **1881 API** (https://services.api1881.no):
+  - `/lookup/phonenumber/{number}` - For retrieving information about a phone number's owner
+  - Proxied via Supabase Edge Functions for secure API key handling
+
+### (Optional) Address Autocomplete:
+- **Google Places API**:
+  - Maps JavaScript API with Places library
+  - Used for alternative address input with autocomplete suggestions
 
 ## Project Structure
 
@@ -82,3 +102,4 @@ For more information, see: [Setting up a custom domain](https://docs.lovable.dev
 ## Project URL
 
 **URL**: https://lovable.dev/projects/763fa5be-65e4-48d5-9b7f-6768a6aa0e7a
+
