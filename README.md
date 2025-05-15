@@ -1,26 +1,46 @@
-# Welcome to your Lovable project
 
-## Project info
+# Norwegian Address Form Application
 
-**URL**: https://lovable.dev/projects/763fa5be-65e4-48d5-9b7f-6768a6aa0e7a
+## Project Overview
 
-## How can I edit this code?
+This application provides a user-friendly form interface for collecting Norwegian addresses with real-time validation and verification. It leverages Norwegian address APIs to ensure address accuracy and completeness.
 
-There are several ways of editing your application.
+### Key Features
 
-**Use Lovable**
+- **Municipality, Street, and House Number Selection**: Step-by-step guided address entry
+- **Real-time Address Validation**: Ensures addresses exist in Norway's address database
+- **Responsive Design**: Works well on all device sizes
+- **Form Validation**: Provides immediate feedback on required fields
+- **Error Handling**: User-friendly error messages for API errors or network issues
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/763fa5be-65e4-48d5-9b7f-6768a6aa0e7a) and start prompting.
+## Technical Details
 
-Changes made via Lovable will be committed automatically to this repo.
+This project is built with:
 
-**Use your preferred IDE**
+- **Vite**: For fast development and optimized builds
+- **TypeScript**: For type safety across the codebase
+- **React**: For building the user interface components
+- **Shadcn UI**: For consistent, accessible UI components
+- **Tailwind CSS**: For responsive design and styling
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## API Integrations
+
+This application integrates with:
+- **Norwegian Address API**: For municipality, street, and house number lookups
+- **Google Places API**: (Optional) For alternative address input with autocomplete
+
+## Project Structure
+
+- **Address Components**: Modular components for different parts of an address
+- **Form Components**: Common form elements with consistent styling and validation
+- **Hooks**: Custom hooks for API communication and form logic
+- **Utils**: Utility functions for validation and data formatting
+
+## Getting Started
+
+### Running Locally
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
 
 ```sh
 # Step 1: Clone the repository using the project's Git URL.
@@ -32,42 +52,33 @@ cd <YOUR_PROJECT_NAME>
 # Step 3: Install the necessary dependencies.
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Step 4: Create a .env file with your API keys (see .env.example).
+
+# Step 5: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Required Environment Variables
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+See `.env.example` for the required environment variables.
 
-**Use GitHub Codespaces**
+## Deployment
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+This project can be easily deployed using Lovable's built-in deployment features.
 
-## What technologies are used for this project?
+To deploy this project:
+1. Open [Lovable](https://lovable.dev/projects/763fa5be-65e4-48d5-9b7f-6768a6aa0e7a)
+2. Click on Share -> Publish
 
-This project is built with:
+### Custom Domain Setup
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+You can connect a custom domain to your Lovable project:
+1. Navigate to Project > Settings > Domains
+2. Click Connect Domain
+3. Follow the instructions to verify ownership and set up DNS
 
-## How can I deploy this project?
+For more information, see: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
 
-Simply open [Lovable](https://lovable.dev/projects/763fa5be-65e4-48d5-9b7f-6768a6aa0e7a) and click on Share -> Publish.
+## Project URL
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+**URL**: https://lovable.dev/projects/763fa5be-65e4-48d5-9b7f-6768a6aa0e7a
